@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import keyboard
 from random import randint
 from time import sleep
 
@@ -28,6 +29,11 @@ class ChristmasTree:
 
 if __name__ == "__main__":
     xmastree =  ChristmasTree()
-    while True:
-        xmastree.draw()
+    try:
+        while True:
+            xmastree.draw()
+            if keyboard.is_pressed('q'):
+                raise KeyboardInterrupt
+    except KeyboardInterrupt:
+        pass
     sys.exit(0)
