@@ -53,7 +53,7 @@ class BundesligaFantasyScraper:
             teamlist[i] = teams[i].contents[0].string
         return teamlist
     
-    def printinjuries(self):
+    def getinjuries(self):
         injured_reserve = []
         count = 0
         response = requests.get(self.pageurl)
@@ -81,17 +81,20 @@ class BundesligaFantasyScraper:
                 playerinfo.append(i)
                 playerinfo.append(data[2].string)
                 playerinfo.append(data[3].string)
+                injury_type = "Unkown"
                 if len(data[0].findAll("img")) > 0:
                     t = data[0].img["src"]
                     if t in types:
-                        playerinfo.append(types[t])
+                        injury_type = types[t]
+                playerinfo.append(injury_type)
+
                 injured_reserve.append(playerinfo)
         return injured_reserve
 
 def runit():
     bfs = BundesligaFantasyScraper()
     teams = bfs.scrapeteams()
-    injuries = bfs.printinjuries()
+    injuries = bfs.getinjuries()
     number_of_injuries_in_squad = 0
     for injury in injuries:
         if injury[0] in squad:
