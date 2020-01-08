@@ -13,15 +13,14 @@ debug = False
 squad = {  
     "Robert Lewandowski",
     "Timo Werner",
-    "Marcus Thuram",
+    "Alassane Plea",
     "Serge Gnabry",
     "Jadon Sancho",
     "Marcel Sabitzer",
-    "Maximilian Eggestein",
+    "Amine Harit",
     "Joshua Kimmich",
     "Christain Günter",
     "Marvin Friedrich",
-    "Peter Gulacsi",
     "Yann Sommer" 
 }
 
@@ -98,7 +97,7 @@ def runit():
     number_of_injuries_in_squad = 0
     for injury in injuries:
         if injury[0] in squad:
-            print("Injury!")
+            print("Note")
             print("\tPlayer:\t{}".format(injury[0]))
             print("\tTeam:\t{}".format(teams[int(injury[1])]))
             print("\tInfo:\t{}".format(injury[2]))
