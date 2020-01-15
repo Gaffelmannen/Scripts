@@ -213,8 +213,8 @@ project.lock.json
 *.feature.xlsx.*
 *.Specs_*.html
 
-# Out Folder
-./TicTacToe/TicTacCLI/out/
+**/*.pyc
+Fractions/__pycache__/fractions.cpython-36.pyc
 
 #####
 # End of core ignore list, below put you custom 'per project' settings (patterns or path)
