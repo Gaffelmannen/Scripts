@@ -11,16 +11,16 @@ from bs4 import BeautifulSoup
 debug = False
 
 squad = {  
-    "Robert Lewandowski",
+    "Thomas Müller",
     "Timo Werner",
     "Erling Haaland",
     "Serge Gnabry",
     "Jadon Sancho",
-    "Maximilian Arnold",
-    "Christopher Nkunku",
+    "Filip Kostic",
+    "Armine Harit",
     "Joshua Kimmich",
-    "Christain Günter",
-    "Marvin Friedrich",
+    "Achraf Hakimi",
+    "Philipp Max",
     "Yann Sommer" 
 }
 
