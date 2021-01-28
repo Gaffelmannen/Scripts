@@ -11,26 +11,7 @@ from bs4 import BeautifulSoup
 debug = False
 selectedSource = "sportsgambler"
 
-squad = {
-    #"Robert Lewandowski",
-    "Nils Petersen",
-    "Timo Werner",
-    "Erling Haaland",
-    "Erling Braut Haland",
-    # Midfield
-    "Alphonso Davies",
-    "Jadon Sancho",
-    "Florian Neuhaus",
-    #"Kai Havertz",
-    "Serge Gnabry",
-    # Defenders
-    "Achraf Hakimi"
-    "Joshua Kimmich",
-    "Lukas Klostermann",
-    #"Philipp Max",
-    # GK
-    "Yann Sommer"
-}
+#squad = {}
 
 types = {
     "/images/injury/red.png" : "Suspended",
@@ -129,7 +110,7 @@ class BundesligaFantasyScraper:
                         print("")
         return injured_reserve
 
-def runit():
+def runit(squad, listtype):
     bfs = BundesligaFantasyScraper()
     teams = bfs.scrapeteams()
     injuries = bfs.getinjuries()
@@ -144,13 +125,29 @@ def runit():
             print("\tType:\t{}".format(injury[4]))
             number_of_injuries_in_squad += 1
     if number_of_injuries_in_squad > 0:
-        print("There are a total of {} injuries in the squad." \
-            .format(number_of_injuries_in_squad))
+        print("There are a total of {} injuries in the {}." \
+            .format(number_of_injuries_in_squad, listtype))
     else:
         print("No injuries in squad.")
 
 if __name__ == "__main__":
     print("Begin Check")
-    runit()
+    print("")
+   
+    players = {}
+
+    print("Team:")
+    with open("team.txt", "r") as f:
+        players = [line.strip() for line in f] 
+    runit(players, "team")
+
+    print("")
+    print("Prospects")
+
+    with open("prospects.txt", "r") as f:
+        players = [line.strip() for line in f]
+    runit(players, "team prospects")
+
+    print("")
     print("Done")
     sys.exit(0)
