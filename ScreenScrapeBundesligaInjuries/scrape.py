@@ -9,6 +9,7 @@ import time
 from bs4 import BeautifulSoup
 
 debug = False
+#selectedSource = "onlinebetting"
 selectedSource = "sportsgambler"
 
 #squad = {}
@@ -47,6 +48,8 @@ class BundesligaFantasyScraper:
             teams = soup.find_all('h3')
             for i in range(0, len(teams)):
                 teamlist[i] = teams[i].contents[0].string
+        if debug:
+            print(teamlist)
         return teamlist
 
     def getinjuries(self):
@@ -62,28 +65,21 @@ class BundesligaFantasyScraper:
             print(response)
         soup = BeautifulSoup(response.text, "html.parser")
         if  selectedSource == "sportsgambler":
-            tables = soup.findAll(attrs={"class" : "home-team"})
-            for i in range(0, len(tables)):
-                table_body = tables[i].find_all("tbody")
-                players = table_body[0]
-                for player in players:
-                    if player == None:
-                        continue
+            injuries = soup.find_all(attrs={"class" : "injury-block"})
+            for injury in injuries:
+                team = injury.find_all(attrs={"class" : "injuries-title"})[0].text
+                #print(team)
+                rows = injury.findAll(attrs={"class" : "inj-row"})
+                for i in range(0, len(rows)):
                     playerinfo = []
-                    player = BeautifulSoup(str(player), "html.parser")
-                    data = player.findAll("a")
-                    if len(data) == 0:
-                        continue
-                    playerinfo.append(data[1].string)
-                    playerinfo.append(i)
-                    playerinfo.append(data[2].string)
-                    playerinfo.append(data[3].string)
+                    playerinfo.append(rows[i].findAll(attrs={"class" : "inj-player"})[0].text)
+                    playerinfo.append(team)
+                    playerinfo.append(rows[i].findAll(attrs={"class" : "inj-info"})[0].text)
+                    playerinfo.append(rows[i].findAll(attrs={"class" : "inj-return h-sm"})[0].text)
                     injury_type = "Unkown"
-                    if len(data[0].findAll("img")) > 0:
-                        t = data[0].img["src"]
-                        if t in types:
-                            injury_type = types[t]
                     playerinfo.append(injury_type)
+                    if debug:
+                        print(playerinfo)
                     injured_reserve.append(playerinfo)
         elif selectedSource == "onlinebetting":
             tables = soup.findAll(attrs={"class" : "injurytable"})
@@ -119,7 +115,8 @@ def runit(squad, listtype):
         if injury[0] in squad:
             print("Note")
             print("\tPlayer:\t{}".format(injury[0]))
-            print("\tTeam:\t{}".format(teams[int(injury[1])]))
+            print("\tTeam:\t{}".format(injury[1]))
+            #print("\tTeam:\t{}".format(teams[int(injury[1])]))
             print("\tInfo:\t{}".format(injury[2]))
             print("\tReturn:\t{}".format(injury[3]))
             print("\tType:\t{}".format(injury[4]))
@@ -133,12 +130,12 @@ def runit(squad, listtype):
 if __name__ == "__main__":
     print("Begin Check")
     print("")
-   
+
     players = {}
 
     print("Team:")
     with open("team.txt", "r") as f:
-        players = [line.strip() for line in f] 
+        players = [line.strip() for line in f]
     runit(players, "team")
 
     print("")
