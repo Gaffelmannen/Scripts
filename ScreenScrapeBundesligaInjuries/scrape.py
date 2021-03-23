@@ -9,8 +9,8 @@ import time
 from bs4 import BeautifulSoup
 
 debug = False
-#selectedSource = "onlinebetting"
-selectedSource = "sportsgambler"
+selectedSource = "onlinebetting"
+#selectedSource = "sportsgambler"
 
 #squad = {}
 
@@ -45,7 +45,7 @@ class BundesligaFantasyScraper:
             for i in range(0, len(teams)):
                 teamlist[i] = teams[i].contents[0].string
         elif selectedSource == "onlinebetting":
-            teams = soup.find_all('h3')
+            teams = soup.findAll(attrs={"class" : "injury-container__team-name"})
             for i in range(0, len(teams)):
                 teamlist[i] = teams[i].contents[0].string
         if debug:
@@ -82,28 +82,22 @@ class BundesligaFantasyScraper:
                         print(playerinfo)
                     injured_reserve.append(playerinfo)
         elif selectedSource == "onlinebetting":
-            tables = soup.findAll(attrs={"class" : "injurytable"})
+            tables = soup.findAll(attrs={"class" : "injury-table"})
             for i in range(0, len(tables)):
-                rows = tables[i]
-                for row in rows:
-                    columns = row.findAll('td')
-                    playerinfo = []
-                    try:
-                        playerinfo.append(columns[1].text)
-                        playerinfo.append(i)
-                        playerinfo.append("Incident date - {}" \
-                            .format(columns[3].text))
-                        playerinfo.append(columns[4].text)
-                        playerinfo.append(columns[2].text)
-                        injured_reserve.append(playerinfo)
+                rows = tables[i].findAll(attrs={"class" : "table-row"})
+                for j in range(0, len(rows)):
+                    columns = rows[j].text.split('\n')
+                    for k in range(0, len(columns)):
                         if debug:
-                            print(columns[1].text)
-                            print(columns[2].text)
-                            print(columns[3].text)
-                    except:
-                        pass
-                    if debug:
-                        print("")
+                            print("{0} :: {1}".format(k, columns[k]))
+                        playerinfo = []
+                        playerinfo.append(columns[2])
+                        playerinfo.append(i)
+                        playerinfo.append(columns[3])
+                        playerinfo.append(columns[5])
+                        playerinfo.append(columns[4])
+                        injured_reserve.append(playerinfo)
+                        break
         return injured_reserve
 
 def runit(squad, listtype):
@@ -115,8 +109,11 @@ def runit(squad, listtype):
         if injury[0] in squad:
             print("Note")
             print("\tPlayer:\t{}".format(injury[0]))
-            print("\tTeam:\t{}".format(injury[1]))
-            #print("\tTeam:\t{}".format(teams[int(injury[1])]))
+            if selectedSource == "onlinebetting":
+                #print("\tTeam:\t{}".format(injury[1]))
+                print("\tTeam:\t{}".format(teams[int(injury[1])]))
+            else:
+                print("\tTeam:\t{}".format(injury[1]))
             print("\tInfo:\t{}".format(injury[2]))
             print("\tReturn:\t{}".format(injury[3]))
             print("\tType:\t{}".format(injury[4]))
