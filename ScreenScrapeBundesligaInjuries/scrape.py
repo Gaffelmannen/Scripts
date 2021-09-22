@@ -9,8 +9,8 @@ import time
 from bs4 import BeautifulSoup
 
 debug = False
-selectedSource = "onlinebetting"
-#selectedSource = "sportsgambler"
+#selectedSource = "onlinebetting"
+selectedSource = "sportsgambler"
 
 #squad = {}
 
@@ -18,6 +18,8 @@ types = {
     "/images/injury/red.png" : "Suspended",
     "/images/injury/cross.png" : "Injured"
 }
+
+headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'}
 
 sources = {
     "httpbin" : "http://httpbin.org/status/200",
@@ -33,7 +35,7 @@ class BundesligaFantasyScraper:
     def scrapeteams(self):
         teams = {}
         teamlist = {}
-        response = requests.get(self.pageurl)
+        response = requests.get(self.pageurl, headers=headers)
         if response.status_code != 200:
             print("Failed.")
             print("========")
@@ -55,7 +57,7 @@ class BundesligaFantasyScraper:
     def getinjuries(self):
         injured_reserve = []
         count = 0
-        response = requests.get(self.pageurl)
+        response = requests.get(self.pageurl, headers=headers)
         if debug:
             print(response.apparent_encoding)
             print(response.headers.get('Content-Type', ''))
@@ -82,6 +84,7 @@ class BundesligaFantasyScraper:
                         print(playerinfo)
                     injured_reserve.append(playerinfo)
         elif selectedSource == "onlinebetting":
+            print(selectedSource)
             tables = soup.findAll(attrs={"class" : "injury-table"})
             for i in range(0, len(tables)):
                 rows = tables[i].findAll(attrs={"class" : "table-row"})
