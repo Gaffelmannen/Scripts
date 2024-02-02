@@ -8,8 +8,9 @@ from dateutil.relativedelta import relativedelta
 class DateFinder:
     def __init__(self):
         #pass
-        self.start_date = date.today()
-        self.number_of_months = 3
+        #self.start_date = date.today()
+        self.start_date = date(2023, 3, 1)
+        self.number_of_months = 6
     
     def get_start_date(self):
         return self.start_date
