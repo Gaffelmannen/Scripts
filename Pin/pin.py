@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 import sys
 from time import sleep
 from random import randint
@@ -25,5 +26,6 @@ while True:
             calculated_pin, \
             guess_count)
         )
+        print("Do not trust a 4 number code!")
         sys.exit(0)
 
