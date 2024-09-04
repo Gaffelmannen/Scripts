@@ -1,18 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
+import io
 import sys
-import requests
-import urllib.request
+import json
 import time
 import random
 
 from bs4 import BeautifulSoup
 
+from selenium import webdriver
+from selenium.webdriver.support.select import Select
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+
 debug = False
+selectedLeagueAndSource = "bundesliga-sportsgambler"
 #selectedLeagueAndSource = "bundesliga-onlinebetting"
-#selectedLeagueAndSource = "bundesliga-sportsgambler"
-selectedLeagueAndSource = "premierleague-sportsgambler"
+#selectedLeagueAndSource = "premierleague-sportsgambler"
+#selectedLeagueAndSource = "premierleague-onlinebetting"
 
 types = {
     "/images/injury/red.png" : "Suspended",
@@ -37,8 +46,6 @@ headers = {
     'accept-language':'en',
     'cache-control':'max-age=0',
     'content-type' : 'application/x-www-form-urlencoded; charset=UTF-8'
-    #'origin': 'https://www.online-betting.me.uk',
-    #'referer' : 'https://www.online-betting.me.uk/injuries/germany-bundesliga-injuries-and-suspensions'
 }
 
 sources = {
@@ -49,108 +56,145 @@ sources = {
     "premierleague-onlinebetting" : "https://www.online-betting.me.uk/injuries/english-premier-league-injuries-and-suspensions"
 }
 
-class BundesligaFantasyScraper:
+class FantasyFootballScraper:
 
+    CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 60
+    
     def __init__(self):
+        self.tempfilename = "temp-{}.txt".format(selectedLeagueAndSource)
         self.pageurl = sources[selectedLeagueAndSource]
+        self.source = selectedLeagueAndSource.split("-")[1]
 
-    def scrapeteams(self):
-        teams = {}
-        teamlist = {}
-        response = requests.get(self.pageurl, headers=headers)
-        if response.status_code != 200:
-            print("Failed.")
-            print("========")
-            print(self.pageurl)
-            print(response)
+        # FireFox Options
+        self.FIREFOX_OPTS = Options()
+        self.FIREFOX_OPTS.log.level = "trace"
+        self.FIREFOX_OPTS.headless = True
+        self.FIREFOX_OPTS.set_preference("browser.cache.disk.enable", False)
+        self.FIREFOX_OPTS.set_preference("browser.cache.memory.enable", False)
+        self.FIREFOX_OPTS.set_preference("browser.cache.offline.enable", False)
+        self.FIREFOX_OPTS.set_preference("network.http.use-cache", False)
+        self.FIREFOX_OPTS.set_preference("javascript.enabled", True)
+        self.FIREFOX_OPTS.set_preference("general.useragent.override","Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0")
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        selectedSource = selectedLeagueAndSource.split("-")[1]
+        # Gecko
+        self.GECKODRIVER_LOG = 'geckodriver.log'
 
-        if selectedSource == "sportsgambler":
-            teams = soup.findAll(attrs={"class" : "injuries-title"})
-            for i in range(0, len(teams)):
-                teamlist[i] = teams[i].contents[0].string
-        elif selectedSource == "onlinebetting":
-            teams = soup.findAll(attrs={"class" : "injury-container__team-name"})
-            for i in range(0, len(teams)):
-                teamlist[i] = teams[i].contents[0].string
-        if debug:
-            print(teamlist)
+    def _save_to_file(self, content):
+        f = open(self.tempfilename, "w", encoding="utf-8")
+        f.write(content)
+        f.close()
 
-        if len(teamlist) == 0:
-            print("Something went horribly wrong.")
-        
-        return teamlist
+    def _read_from_file(self):
+        text = None
+        with io.open(self.tempfilename, "r", encoding="utf8") as f:
+            text = f.read()
+        return text
 
-    def getinjuries(self):
+    def _get_injuries(self):
+        read_from_remote = True
+
+        if os.path.exists(self.tempfilename):
+            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
+                read_from_remote = False
+
+        if read_from_remote:
+            self._read_from_source()
+
+        return self._find_injuried_players()
+
+
+    def _read_from_source(self):
+        data = {}
+        driver = webdriver.Firefox(
+            options=self.FIREFOX_OPTS,
+            service_log_path=self.GECKODRIVER_LOG
+        )
+        driver.get(self.pageurl)
+        if self.source == "onlinebetting":
+            elements_teams = driver.find_elements_by_xpath('//h2[@class="injury-container__team-name"]')
+            elements_injuries = driver.find_elements_by_xpath('//div[@class="injury-table-container"]')
+            for i in range(0, len(elements_teams)):
+                team_name = elements_teams[i].get_attribute("innerText")
+                injured_players = elements_injuries[i].get_attribute("innerHTML")
+                data[team_name] = injured_players
+        elif self.source == "sportsgambler":
+            elements_teams = driver.find_elements_by_xpath('//h3[@class="injuries-title"]')
+            elements_injuries = driver.find_elements_by_xpath('//div[@class="inj-container"]')
+            for i in range(0, len(elements_teams)):
+                team_name = elements_teams[i].get_attribute("innerText")
+                rows = elements_injuries[i].get_attribute("innerHTML")
+                data[team_name] = rows
+        driver.close()
+
+        self._save_to_file(json.dumps(data, indent=4, sort_keys=True))
+
+    def _getteams(self):
+        read_from_remote = True
+        teams = []
+
+        if os.path.exists(self.tempfilename):
+            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
+                read_from_remote = False
+
+        if read_from_remote:
+            self._read_from_source()
+
+        with open(self.tempfilename) as f:
+            json_data = json.load(f)
+            for top in json_data:
+                teams.append(top)
+        return teams
+
+    def _find_injuried_players(self):
         injured_reserve = []
-        count = 0
-        response = requests.get(self.pageurl, headers=headers)
-        if debug:
-            print(response.apparent_encoding)
-            print(response.headers.get('Content-Type', ''))
-        if response.status_code != 200:
-            print("Failed.")
-            print("========")
-            print(response)
-        
-        soup = BeautifulSoup(response.text, "html.parser")
-        selectedSource = selectedLeagueAndSource.split("-")[1]
 
-        if  selectedSource == "sportsgambler":
-            injuries = soup.find_all(attrs={"class" : "injury-block"})
-            for injury in injuries:
-                team = injury.find_all(attrs={"class" : "injuries-title"})[0].text
-                rows = injury.findAll(attrs={"class" : "inj-row"})
-                for i in range(0, len(rows)):
+        with open(self.tempfilename) as f:
+            parts = json.load(f)
+            if self.source == "onlinebetting":
+                for part in parts:
+                    teams = BeautifulSoup(parts[part], "html.parser")
+                    tables = teams.find_all("table")
+                    for i in range(0, len(tables)):
+                        rows = tables[i].find_all("tr")
+                        for j in range(0, len(rows)):
+                            columns = rows[j].find_all("td")
+                            for k in range(0, len(columns)):
+                                playerinfo = []
+                                playerinfo.append(part)
+                                playerinfo.append(columns[1].get_text())
+                                playerinfo.append(columns[2].get_text())
+                                playerinfo.append(columns[3].get_text())
+                                playerinfo.append(columns[4].get_text())
+                                injured_reserve.append(playerinfo)
+                                break
+            elif self.source == "sportsgambler":
+                for part in parts:
+                    driver = BeautifulSoup(parts[part], "html.parser")
+                    spans = driver.find_all("span")
                     playerinfo = []
-                    playerinfo.append(rows[i].findAll(attrs={"class" : "inj-player"})[0].text)
-                    playerinfo.append(team)
-                    playerinfo.append(rows[i].findAll(attrs={"class" : "inj-info"})[0].text)
-                    playerinfo.append(rows[i].findAll(attrs={"class" : "inj-return h-sm"})[0].text)
-                    injury_type = "Unkown"
-                    playerinfo.append(injury_type)
-                    if debug:
-                        print(playerinfo)
+                    playerinfo.append(part)
+                    #playerinfo.append(spans[0].get_text())
+                    playerinfo.append(spans[1].get_text())
+                    playerinfo.append(spans[2].get_text())
+                    playerinfo.append(spans[3].get_text())
+                    playerinfo.append(spans[4].get_text())
+                    #for span in spans:
+                    #    playerinfo.append(span.get_text())
                     injured_reserve.append(playerinfo)
-        elif selectedSource == "onlinebetting":
-            print(selectedSource)
-            tables = soup.findAll(attrs={"class" : "injury-table"})
-            for i in range(0, len(tables)):
-                rows = tables[i].findAll(attrs={"class" : "table-row"})
-                for j in range(0, len(rows)):
-                    columns = rows[j].text.split('\n')
-                    for k in range(0, len(columns)):
-                        if debug:
-                            print("{0} :: {1}".format(k, columns[k]))
-                        playerinfo = []
-                        playerinfo.append(columns[2])
-                        playerinfo.append(i)
-                        playerinfo.append(columns[3])
-                        playerinfo.append(columns[5])
-                        playerinfo.append(columns[4])
-                        injured_reserve.append(playerinfo)
-                        break
         return injured_reserve
 
 def runit(squad, listtype):
-    bfs = BundesligaFantasyScraper()
-    teams = bfs.scrapeteams()
+    bfs = FantasyFootballScraper()
     injuries = bfs.getinjuries()
     number_of_injuries_in_squad = 0
     for injury in injuries:
         if injury[0] in squad:
             print("Note")
             print("\tPlayer:\t{}".format(injury[0]))
-
-            selectedSource = selectedLeagueAndSource.split("-")[1]
-
-            if selectedSource == "onlinebetting":
-                print("\tTeam:\t{}".format(teams[int(injury[1])]))
-            else:
-                print("\tTeam:\t{}".format(injury[1]))
-
             print("\tInfo:\t{}".format(injury[2]))
             print("\tReturn:\t{}".format(injury[3]))
             print("\tType:\t{}".format(injury[4]))
@@ -162,32 +206,35 @@ def runit(squad, listtype):
         print("No injuries in squad.")
 
 if __name__ == "__main__":
-    print("Begin Check")
-    print("")
-
     league = selectedLeagueAndSource.split("-")[0]
-
-    if debug:    
-        print("")
-        print(league)
-        print("")
-    
     team_filename = "{0}-team.txt".format(league)
     prospects_filename = "{}-prospects.txt".format(league)
-    players = {}
+    listtype = "Squad"
+
+    s = FantasyFootballScraper()
+    injuries = s._get_injuries()
 
     print("Team:")
     with open(team_filename, "r") as f:
         players = [line.strip() for line in f]
-    runit(players, "team")
+    
+    number_of_injuries_in_squad = 0
+    print("Number of injuries reported: {}".format(len(injuries)))
 
-    print("")
-    print("Prospects:")
+    for injury in injuries:
+        if injury[1] in players:
+            print("Note")
+            print("\tPlayer:\t{}".format(injury[1]))
+            print("\tType:\t{}".format(injury[2]))
+            print("\tReturn:\t{}".format(injury[3]))
+            print("\tInfo:\t{}".format(injury[4]))
+            print("\tTeam:\t{}".format(injury[0]))
+            number_of_injuries_in_squad += 1
+    
+    if number_of_injuries_in_squad > 0:
+        print("There are a total of {} injuries in the {}." \
+            .format(number_of_injuries_in_squad, listtype))
+    else:
+        print("No injuries in squad.")
 
-    with open(prospects_filename, "r") as f:
-        players = [line.strip() for line in f]
-    runit(players, "team prospects")
-
-    print("")
-    print("Done")
-    sys.exit(0)
+    #run_old_school(debug, selectedLeagueAndSource, runit)
