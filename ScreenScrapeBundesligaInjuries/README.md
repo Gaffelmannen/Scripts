@@ -1,5 +1,13 @@
-# PIN Guesser
-Shows how insecure a 4 digit pin is.
+# Fantasy Screen Scraper
+Allows you to check what players are injured in
+- Premier Leagure
+- Bundesliga
+
+It currently has two sources:
+- onlinebetting.com
+- sportsgambler.com
+
+Choose league and source when you run the script.
 
 
 ## Setup
@@ -14,11 +22,17 @@ pip install -r requirements.txt
 ```
 
 
-## Run it
+## Use it
 To run the program call the script.
 
+1.
+Edit your team file:
+premierleague-team.txt for Premier League
+bundesliga-team.txt for Bundesliga
+
+2.
 ```
-./pin.py
+./scrape.py
 ```
 
 ## Dependencies
