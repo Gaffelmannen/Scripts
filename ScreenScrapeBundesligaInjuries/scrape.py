@@ -3,6 +3,7 @@
 
 import os
 import io
+import re
 import sys
 import json
 import time
@@ -90,21 +91,6 @@ class FantasyFootballScraper:
             text = f.read()
         return text
 
-    def _get_injuries(self):
-        read_from_remote = True
-
-        if os.path.exists(self.tempfilename):
-            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
-            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
-            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
-                read_from_remote = False
-
-        if read_from_remote:
-            self._read_from_source()
-
-        return self._find_injuried_players()
-
-
     def _read_from_source(self):
         data = {}
         driver = webdriver.Firefox(
@@ -120,12 +106,14 @@ class FantasyFootballScraper:
                 injured_players = elements_injuries[i].get_attribute("innerHTML")
                 data[team_name] = injured_players
         elif self.source == "sportsgambler":
+            injury_blocks = driver.find_elements_by_xpath('//div[@class="injury-block"]')
             elements_teams = driver.find_elements_by_xpath('//h3[@class="injuries-title"]')
-            elements_injuries = driver.find_elements_by_xpath('//div[@class="inj-container"]')
+            #elements_injuries = driver.find_elements_by_xpath('//div[@class="inj-container"]')
             for i in range(0, len(elements_teams)):
                 team_name = elements_teams[i].get_attribute("innerText")
-                rows = elements_injuries[i].get_attribute("innerHTML")
-                data[team_name] = rows
+                injured_players = injury_blocks[i].get_attribute("innerHTML")
+                data[team_name] = injured_players
+
         driver.close()
 
         self._save_to_file(json.dumps(data, indent=4, sort_keys=True))
@@ -174,36 +162,34 @@ class FantasyFootballScraper:
             elif self.source == "sportsgambler":
                 for part in parts:
                     driver = BeautifulSoup(parts[part], "html.parser")
-                    spans = driver.find_all("span")
-                    playerinfo = []
-                    playerinfo.append(part)
-                    #playerinfo.append(spans[0].get_text())
-                    playerinfo.append(spans[1].get_text())
-                    playerinfo.append(spans[2].get_text())
-                    playerinfo.append(spans[3].get_text())
-                    playerinfo.append(spans[4].get_text())
-                    #for span in spans:
-                    #    playerinfo.append(span.get_text())
-                    injured_reserve.append(playerinfo)
+                    #spans = driver.find_all("span")
+                    injury_containers = driver.find_all(attrs={"class" : "inj-container"})
+                    for injury_container in injury_containers:
+                        spans = injury_container.find_all("span")
+                        if len(spans) <= 7:
+                            continue
+                        playerinfo = []
+                        playerinfo.append(part)
+                        playerinfo.append(spans[1].get_text())
+                        playerinfo.append(spans[2].get_text())
+                        playerinfo.append(spans[7].get_text())
+                        playerinfo.append(spans[6].get_text())
+                        injured_reserve.append(playerinfo)
         return injured_reserve
+    
+    def get_injuries(self):
+        read_from_remote = True
 
-def runit(squad, listtype):
-    bfs = FantasyFootballScraper()
-    injuries = bfs.getinjuries()
-    number_of_injuries_in_squad = 0
-    for injury in injuries:
-        if injury[0] in squad:
-            print("Note")
-            print("\tPlayer:\t{}".format(injury[0]))
-            print("\tInfo:\t{}".format(injury[2]))
-            print("\tReturn:\t{}".format(injury[3]))
-            print("\tType:\t{}".format(injury[4]))
-            number_of_injuries_in_squad += 1
-    if number_of_injuries_in_squad > 0:
-        print("There are a total of {} injuries in the {}." \
-            .format(number_of_injuries_in_squad, listtype))
-    else:
-        print("No injuries in squad.")
+        if os.path.exists(self.tempfilename):
+            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
+                read_from_remote = False
+
+        if read_from_remote:
+            self._read_from_source()
+
+        return self._find_injuried_players()
 
 if __name__ == "__main__":
     league = selectedLeagueAndSource.split("-")[0]
@@ -212,9 +198,8 @@ if __name__ == "__main__":
     listtype = "Squad"
 
     s = FantasyFootballScraper()
-    injuries = s._get_injuries()
+    injuries = s.get_injuries()
 
-    print("Team:")
     with open(team_filename, "r") as f:
         players = [line.strip() for line in f]
     
@@ -237,4 +222,3 @@ if __name__ == "__main__":
     else:
         print("No injuries in squad.")
 
-    #run_old_school(debug, selectedLeagueAndSource, runit)
