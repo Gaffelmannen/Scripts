@@ -3,11 +3,11 @@
 
 import os
 import io
-import re
-import sys
 import json
 import time
 import random
+
+import simple_term_menu as stm
 
 from bs4 import BeautifulSoup
 
@@ -19,10 +19,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 debug = False
-selectedLeagueAndSource = "bundesliga-sportsgambler"
-#selectedLeagueAndSource = "bundesliga-onlinebetting"
-#selectedLeagueAndSource = "premierleague-sportsgambler"
-#selectedLeagueAndSource = "premierleague-onlinebetting"
 
 types = {
     "/images/injury/red.png" : "Suspended",
@@ -191,23 +187,28 @@ class FantasyFootballScraper:
 
         return self._find_injuried_players()
 
-if __name__ == "__main__":
+def show_results(selectedLeagueAndSource):
     league = selectedLeagueAndSource.split("-")[0]
     team_filename = "{0}-team.txt".format(league)
     prospects_filename = "{}-prospects.txt".format(league)
-    listtype = "Squad"
 
     s = FantasyFootballScraper()
     injuries = s.get_injuries()
 
     with open(team_filename, "r") as f:
         players = [line.strip() for line in f]
+
+    with open(prospects_filename, "r") as f:
+        prospects = [line.strip() for line in f]
     
     number_of_injuries_in_squad = 0
+    number_of_injuries_in_prospects = 0
     print("Number of injuries reported: {}".format(len(injuries)))
 
+    print("")
+    print("- Squad -")
     for injury in injuries:
-        if injury[1] in players:
+        if injury[1] in players and injury[1] != "":
             print("Note")
             print("\tPlayer:\t{}".format(injury[1]))
             print("\tType:\t{}".format(injury[2]))
@@ -215,10 +216,48 @@ if __name__ == "__main__":
             print("\tInfo:\t{}".format(injury[4]))
             print("\tTeam:\t{}".format(injury[0]))
             number_of_injuries_in_squad += 1
-    
     if number_of_injuries_in_squad > 0:
-        print("There are a total of {} injuries in the {}." \
-            .format(number_of_injuries_in_squad, listtype))
+        print("There are a total of {} injuries in the squad." \
+            .format(number_of_injuries_in_squad))
     else:
         print("No injuries in squad.")
+    
+    print("")
+    print("- Prospects -")
+    for injury in injuries:
+        if injury[1] in prospects and injury[1] != "":
+            print("Note")
+            print("\tPlayer:\t{}".format(injury[1]))
+            print("\tType:\t{}".format(injury[2]))
+            print("\tReturn:\t{}".format(injury[3]))
+            print("\tInfo:\t{}".format(injury[4]))
+            print("\tTeam:\t{}".format(injury[0]))
+            number_of_injuries_in_prospects += 1
+    if number_of_injuries_in_prospects > 0:
+        print("There are a total of {} injuries in the prospect list." \
+            .format(number_of_injuries_in_prospects))
+    else:
+        print("No injuries in the prospect list.")
 
+
+if __name__ == "__main__":
+    mapping = \
+            { \
+                "Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
+                "Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
+                "Premier League - Sportsgambler" : "premierleague-sportsgambler", \
+                "Premier League - Onlinebetting" : "premierleague-onlinebetting" \
+            }
+    info = "Please choose league and source below:"
+    caption = "Welcome to Screen Scraper for Fantasy football."
+
+    print(caption)
+    
+    terminal_menu = stm.TerminalMenu(mapping.keys(), title=info)
+    selected = terminal_menu.show()
+    
+    print("Selected: {}".format(list(mapping.keys())[selected]))
+
+    selectedLeagueAndSource = list(mapping.values())[selected]
+    show_results(selectedLeagueAndSource)
+    print("")
