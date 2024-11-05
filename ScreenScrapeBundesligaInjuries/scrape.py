@@ -65,7 +65,8 @@ class FantasyFootballScraper:
         # FireFox Options
         self.FIREFOX_OPTS = Options()
         self.FIREFOX_OPTS.log.level = "trace"
-        self.FIREFOX_OPTS.headless = True
+        #self.FIREFOX_OPTS.headless = True
+        self.FIREFOX_OPTS.add_argument("--headless")
         self.FIREFOX_OPTS.set_preference("browser.cache.disk.enable", False)
         self.FIREFOX_OPTS.set_preference("browser.cache.memory.enable", False)
         self.FIREFOX_OPTS.set_preference("browser.cache.offline.enable", False)
@@ -95,16 +96,15 @@ class FantasyFootballScraper:
         )
         driver.get(self.pageurl)
         if self.source == "onlinebetting":
-            elements_teams = driver.find_elements_by_xpath('//h2[@class="injury-container__team-name"]')
-            elements_injuries = driver.find_elements_by_xpath('//div[@class="injury-table-container"]')
+            elements_teams = driver.find_elements('xpath', '//h2[@class="injury-container__team-name"]')
+            elements_injuries = driver.find_elements('xpath', '//div[@class="injury-table-container"]')
             for i in range(0, len(elements_teams)):
                 team_name = elements_teams[i].get_attribute("innerText")
                 injured_players = elements_injuries[i].get_attribute("innerHTML")
                 data[team_name] = injured_players
         elif self.source == "sportsgambler":
-            injury_blocks = driver.find_elements_by_xpath('//div[@class="injury-block"]')
-            elements_teams = driver.find_elements_by_xpath('//h3[@class="injuries-title"]')
-            #elements_injuries = driver.find_elements_by_xpath('//div[@class="inj-container"]')
+            injury_blocks = driver.find_elements('xpath', '//div[@class="injury-block"]')
+            elements_teams = driver.find_elements('xpath', '//h3[@class="injuries-title"]')
             for i in range(0, len(elements_teams)):
                 team_name = elements_teams[i].get_attribute("innerText")
                 injured_players = injury_blocks[i].get_attribute("innerHTML")
@@ -244,9 +244,9 @@ if __name__ == "__main__":
     mapping = \
             { \
                 "Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
-                "Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
-                "Premier League - Sportsgambler" : "premierleague-sportsgambler", \
-                "Premier League - Onlinebetting" : "premierleague-onlinebetting" \
+                #"Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
+                "Premier League - Sportsgambler" : "premierleague-sportsgambler" \
+                #"Premier League - Onlinebetting" : "premierleague-onlinebetting" \
             }
     info = "Please choose league and source below:"
     caption = "Welcome to Screen Scraper for Fantasy football."
