@@ -65,7 +65,6 @@ class FantasyFootballScraper:
         # FireFox Options
         self.FIREFOX_OPTS = Options()
         self.FIREFOX_OPTS.log.level = "trace"
-        #self.FIREFOX_OPTS.headless = True
         self.FIREFOX_OPTS.add_argument("--headless")
         self.FIREFOX_OPTS.set_preference("browser.cache.disk.enable", False)
         self.FIREFOX_OPTS.set_preference("browser.cache.memory.enable", False)
@@ -241,23 +240,28 @@ def show_results(selectedLeagueAndSource):
 
 
 if __name__ == "__main__":
-    mapping = \
-            { \
-                "Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
-                #"Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
-                "Premier League - Sportsgambler" : "premierleague-sportsgambler" \
-                #"Premier League - Onlinebetting" : "premierleague-onlinebetting" \
-            }
-    info = "Please choose league and source below:"
-    caption = "Welcome to Screen Scraper for Fantasy football."
 
-    print(caption)
-    
-    terminal_menu = stm.TerminalMenu(mapping.keys(), title=info)
-    selected = terminal_menu.show()
-    
-    print("Selected: {}".format(list(mapping.keys())[selected]))
+    while True:
+        mapping = \
+                { \
+                    "Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
+                    #"Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
+                    "Premier League - Sportsgambler" : "premierleague-sportsgambler", \
+                    #"Premier League - Onlinebetting" : "premierleague-onlinebetting", \
+                    "Quit" : "Quit"
+                }
+        info = "Please choose league and source below:"
+        caption = "Welcome to Screen Scraper for Fantasy football."
+        
+        terminal_menu = stm.TerminalMenu(mapping.keys(), title=info)
+        selected = terminal_menu.show()
 
-    selectedLeagueAndSource = list(mapping.values())[selected]
-    show_results(selectedLeagueAndSource)
-    print("")
+        print("Selected: {}".format(list(mapping.keys())[selected]))
+
+        if list(mapping.keys())[selected] == "Quit":
+            print("Thanks for using Screen Scraper for Fantasy football.")
+            break
+
+        selectedLeagueAndSource = list(mapping.values())[selected]
+        show_results(selectedLeagueAndSource)
+        print("")
