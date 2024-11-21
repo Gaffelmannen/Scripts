@@ -1,0 +1,4 @@
+# Optimal army - Settings
+entity1 : ["Swordsmen", 60, 80, 140, 1200]
+entity2 : ["Bowmen", 20, 10, 800]
+entity3 : ["Horsemen", 40, 100, 600]
