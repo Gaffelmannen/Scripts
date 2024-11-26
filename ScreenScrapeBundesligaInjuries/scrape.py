@@ -49,6 +49,7 @@ sources = {
     "httpbin" : "http://httpbin.org/status/200",
     "bundesliga-sportsgambler" : "https://www.sportsgambler.com/football/injuries-suspensions/germany-bundesliga/",
     "bundesliga-onlinebetting" : "https://www.online-betting.me.uk/injuries/germany-bundesliga-injuries-and-suspensions/",
+    "bundesliga-betinf" : "https://www.betinf.com/germany_injured.htm",
     "premierleague-sportsgambler" : "https://www.sportsgambler.com/injuries/football/england-premier-league/",
     "premierleague-onlinebetting" : "https://www.online-betting.me.uk/injuries/english-premier-league-injuries-and-suspensions"
 }
@@ -108,10 +109,16 @@ class FantasyFootballScraper:
                 team_name = elements_teams[i].get_attribute("innerText")
                 injured_players = injury_blocks[i].get_attribute("innerHTML")
                 data[team_name] = injured_players
-
-        driver.close()
+        elif self.source == "betinf":
+            injury_blocks = driver.find_elements('xpath', '//table[@class="tbl tblc1"]')
+            elements_teams = driver.find_elements('xpath', '//h3[@class="exph" and @id]')
+            for i in range(0, len(elements_teams)):
+                team_name = elements_teams[i].get_attribute("innerText")
+                injured_players = injury_blocks[i].get_attribute("innerHTML")
+                data[team_name] = injured_players
 
         self._save_to_file(json.dumps(data, indent=4, sort_keys=True))
+        driver.close()
 
     def _getteams(self):
         read_from_remote = True
@@ -131,6 +138,16 @@ class FantasyFootballScraper:
             for top in json_data:
                 teams.append(top)
         return teams
+
+    def _separate_player_name_from_position(self, data):
+        N=3
+        name = ""
+        position = ""
+        for i in range(0, len(data)):
+            if data[i] == "(":
+                position = data[-N:]
+                name = data[:-N].strip()
+        return name, position
 
     def _find_injuried_players(self):
         injured_reserve = []
@@ -170,6 +187,26 @@ class FantasyFootballScraper:
                         playerinfo.append(spans[7].get_text())
                         playerinfo.append(spans[6].get_text())
                         injured_reserve.append(playerinfo)
+            elif self.source == "betinf":
+                for part in parts:
+                    table = BeautifulSoup(parts[part], "html.parser")
+                    rows = table.find_all("tr")
+                    for row in rows:
+                        columns = row.find_all("td")
+                        if len(columns) <= 0:
+                            continue
+                        for i in range(0, len(columns)):
+                            name, pos = self._separate_player_name_from_position(columns[1].get_text())
+                            playerinfo = []
+                            playerinfo.append(part) # Team
+                            playerinfo.append(name) # Player                            
+                            playerinfo.append(columns[4].get_text()) # Type
+                            playerinfo.append(columns[2].get_text()) # Return
+                            playerinfo.append(columns[3].get_text()+ " " + pos) # Info
+                            playerinfo.append(columns[4].get_text())
+                            playerinfo.append(columns[5].get_text())
+                            injured_reserve.append(playerinfo)
+                            break
         return injured_reserve
     
     def get_injuries(self):
@@ -245,6 +282,7 @@ if __name__ == "__main__":
         mapping = \
                 { \
                     "Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
+                    "Bundesliga - BetInf" : "bundesliga-betinf", \
                     #"Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
                     "Premier League - Sportsgambler" : "premierleague-sportsgambler", \
                     #"Premier League - Onlinebetting" : "premierleague-onlinebetting", \
