@@ -51,7 +51,8 @@ sources = {
     "bundesliga-onlinebetting" : "https://www.online-betting.me.uk/injuries/germany-bundesliga-injuries-and-suspensions/",
     "bundesliga-betinf" : "https://www.betinf.com/germany_injured.htm",
     "premierleague-sportsgambler" : "https://www.sportsgambler.com/injuries/football/england-premier-league/",
-    "premierleague-onlinebetting" : "https://www.online-betting.me.uk/injuries/english-premier-league-injuries-and-suspensions"
+    "premierleague-onlinebetting" : "https://www.online-betting.me.uk/injuries/english-premier-league-injuries-and-suspensions",
+    "premierleague-betinf" : "https://www.betinf.com/england_injured.htm"
 }
 
 class FantasyFootballScraper:
@@ -285,6 +286,7 @@ if __name__ == "__main__":
                     "Bundesliga - BetInf" : "bundesliga-betinf", \
                     #"Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
                     "Premier League - Sportsgambler" : "premierleague-sportsgambler", \
+                    "Premier League - BetInf" : "premierleague-betinf", \
                     #"Premier League - Onlinebetting" : "premierleague-onlinebetting", \
                     "Quit" : "Quit"
                 }
