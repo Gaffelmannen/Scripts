@@ -7,6 +7,8 @@ import json
 import time
 import random
 
+from colorama import Fore, Back, Style
+
 import simple_term_menu as stm
 
 from bs4 import BeautifulSoup
@@ -89,7 +91,7 @@ class FantasyFootballScraper:
             text = f.read()
         return text
 
-    def _read_from_source(self):
+    def _read_from_remote_source(self):
         data = {}
         driver = webdriver.Firefox(
             options=self.FIREFOX_OPTS,
@@ -132,12 +134,12 @@ class FantasyFootballScraper:
                 read_from_remote = False
 
         if read_from_remote:
-            self._read_from_source()
+            self._read_from_remote_source()
 
         with open(self.tempfilename) as f:
             json_data = json.load(f)
-            for top in json_data:
-                teams.append(top)
+            for part in json_data:
+                teams.append(part)
         return teams
 
     def _separate_player_name_from_position(self, data):
@@ -220,7 +222,7 @@ class FantasyFootballScraper:
                 read_from_remote = False
 
         if read_from_remote:
-            self._read_from_source()
+            self._read_from_remote_source()
 
         return self._find_injuried_players()
 
@@ -292,8 +294,20 @@ if __name__ == "__main__":
                 }
         info = "Please choose league and source below:"
         caption = "Welcome to Screen Scraper for Fantasy football."
+        main_menu_cursor = "> "
+        main_menu_cursor_style = ("fg_red", "bold")
+        main_menu_style = ("bg_red", "fg_yellow")
+
+        print(Fore.GREEN + caption + Style.RESET_ALL)
         
-        terminal_menu = stm.TerminalMenu(mapping.keys(), title=info)
+        terminal_menu = stm.TerminalMenu(
+            mapping.keys(), 
+            title=info,
+            menu_cursor=main_menu_cursor,
+            menu_cursor_style=main_menu_cursor_style,
+            menu_highlight_style=main_menu_style
+        )
+        
         selected = terminal_menu.show()
 
         print("Selected: {}".format(list(mapping.keys())[selected]))

@@ -2,3 +2,4 @@ beautifulsoup4>=4.8.1
 selenium
 bs4
 simple-term-menu>=1.6.4
+colorama>=0.4.6
