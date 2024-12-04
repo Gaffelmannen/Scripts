@@ -20,6 +20,27 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
+title =  r"""
+    ______            __
+   / ____/___ _____  / /_____ ________  __
+  / /_  / __ `/ __ \/ __/ __ `/ ___/ / / /
+ / __/ / /_/ / / / / /_/ /_/ (__  ) /_/ /
+/_/    \__,_/_/ /_/\__/\__,_/____/\__, /
+                                 /____/
+    ______            __  __          ____
+   / ____/___  ____  / /_/ /_  ____ _/ / /
+  / /_  / __ \/ __ \/ __/ __ \/ __ `/ / /
+ / __/ / /_/ / /_/ / /_/ /_/ / /_/ / / /
+/_/    \____/\____/\__/_.___/\__,_/_/_/
+
+   _____
+  / ___/______________ _____  ___  _____
+  \__ \/ ___/ ___/ __ `/ __ \/ _ \/ ___/
+ ___/ / /__/ /  / /_/ / /_/ /  __/ /
+/____/\___/_/   \__,_/ .___/\___/_/
+                    /_/
+        """
+
 debug = False
 
 types = {
@@ -248,12 +269,14 @@ def show_results(selectedLeagueAndSource):
     print("- Squad -")
     for injury in injuries:
         if injury[1] in players and injury[1] != "":
+            print(Fore.RED)
             print("Note")
             print("\tPlayer:\t{}".format(injury[1]))
             print("\tType:\t{}".format(injury[2]))
             print("\tReturn:\t{}".format(injury[3]))
             print("\tInfo:\t{}".format(injury[4]))
             print("\tTeam:\t{}".format(injury[0]))
+            print(Style.RESET_ALL)
             number_of_injuries_in_squad += 1
     if number_of_injuries_in_squad > 0:
         print("There are a total of {} injuries in the squad." \
@@ -280,6 +303,8 @@ def show_results(selectedLeagueAndSource):
 
 
 if __name__ == "__main__":
+
+    print(Fore.CYAN + title + Style.RESET_ALL)
 
     while True:
         mapping = \
