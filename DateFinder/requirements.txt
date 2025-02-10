@@ -1,2 +1,2 @@
 python-dateutil>=2.8.2
-
+simple-term-menu>=1.6.6
