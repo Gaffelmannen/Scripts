@@ -16,7 +16,7 @@ if __name__ == "__main__":
         "One month" : "one-month", \
         "Three months" : "three-months", \
         "Six months" : "six-months", \
-        "Quit" : "Quit"
+        "Quit" : "quit"
     }
     info = "Please choose your request below:"
     caption = "Welcome to Datefinder."
@@ -43,19 +43,24 @@ if __name__ == "__main__":
 
         print("Selected: {}".format(list(mapping.keys())[selected]))
 
-        if list(mapping.keys())[selected] == "Quit":
+        if list(mapping.values())[selected] == "quit":
             print("Thanks for using Datefinder 1.0")
             break
 
         choice = list(mapping.values())[selected]
+
         result = \
         {
             "one-month": lambda result: date.today() + relativedelta(months=+1),
             "three-months": lambda result: date.today() + relativedelta(months=+3),
             "six-months": lambda result: date.today() + relativedelta(months=+6)
-        }["one-month"](choice)
+        }[choice](0)
         
-        print("The calculated date is: {}".format(result))
+        print("The date that is {} from {} is {}".format(
+            list(mapping.keys())[selected].lower(),
+            date.today(),
+            result
+        ))
         print("")
     
     sys.exit(0)
