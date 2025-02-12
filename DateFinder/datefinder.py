@@ -2,17 +2,30 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import datetime
+
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from colorama import Fore, Back, Style
 
 import simple_term_menu as stm
 
+def is_valid_date(string_to_check):
+    try:
+        datetime.date.fromisoformat(string_to_check)
+    except ValueError:
+        return False
+    return True
+
 if __name__ == "__main__":
+
+    thedate = date.today()
 
     title = "Datefinder 1.0"
     mapping = \
     { \
+        "Set date" : "setdate",
+        "-": "-",
         "One month" : "one-month", \
         "Three months" : "three-months", \
         "Six months" : "six-months", \
@@ -47,20 +60,33 @@ if __name__ == "__main__":
             print("Thanks for using Datefinder 1.0")
             break
 
-        choice = list(mapping.values())[selected]
+        if list(mapping.values())[selected] == "setdate":
+            while True:
+                read_value = input("Enter from date (YYYY-MM-DD) or leave blank for today :> ")
+                if read_value == "":
+                    break
 
-        result = \
-        {
-            "one-month": lambda result: date.today() + relativedelta(months=+1),
-            "three-months": lambda result: date.today() + relativedelta(months=+3),
-            "six-months": lambda result: date.today() + relativedelta(months=+6)
-        }[choice](0)
+                if is_valid_date(read_value):
+                    thedate = datetime.date.fromisoformat(read_value)
+                    break
         
-        print("The date that is {} from {} is {}".format(
-            list(mapping.keys())[selected].lower(),
-            date.today(),
-            result
-        ))
-        print("")
+        if selected > 1:
+            choice = list(mapping.values())[selected]
+
+            result = \
+            {
+                "one-month": lambda result: thedate + relativedelta(months=+1),
+                "three-months": lambda result: thedate + relativedelta(months=+3),
+                "six-months": lambda result: thedate + relativedelta(months=+6)
+            }[choice](0)
+            
+            print("{}The date that is {} from {} is {}{}".format(
+                Fore.BLUE,
+                list(mapping.keys())[selected].lower(),
+                thedate,
+                result,
+                Style.RESET_ALL
+            ))
+            print("")
     
     sys.exit(0)
