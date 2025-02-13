@@ -29,6 +29,7 @@ if __name__ == "__main__":
         "One month" : "one-month", \
         "Three months" : "three-months", \
         "Six months" : "six-months", \
+        "Hundred days" : "one-hundred-days", \
         "Quit" : "quit"
     }
     info = "Please choose your request below:"
@@ -77,13 +78,14 @@ if __name__ == "__main__":
             {
                 "one-month": lambda result: thedate + relativedelta(months=+1),
                 "three-months": lambda result: thedate + relativedelta(months=+3),
-                "six-months": lambda result: thedate + relativedelta(months=+6)
+                "six-months": lambda result: thedate + relativedelta(months=+6),
+                "one-hundred-days": lambda result: thedate + relativedelta(days=+100)
             }[choice](0)
             
-            print("{}The date that is {} from {} is {}{}".format(
-                Fore.BLUE,
+            print("The date that is {} from {} is {}{}{}".format(
                 list(mapping.keys())[selected].lower(),
                 thedate,
+                Back.GREEN,
                 result,
                 Style.RESET_ALL
             ))
