@@ -20,16 +20,17 @@ def is_valid_date(string_to_check):
 if __name__ == "__main__":
 
     thedate = date.today()
+    offsetvalue = 1
 
     title = "Datefinder 1.0"
     mapping = \
     { \
         "Set date" : "setdate",
+        "Set offset value": "offsetvalue",
         "-": "-",
-        "One month" : "one-month", \
-        "Three months" : "three-months", \
-        "Six months" : "six-months", \
-        "Hundred days" : "one-hundred-days", \
+        "Days" : "days", \
+        "Months" : "months", \
+        "Years" : "years", \
         "Quit" : "quit"
     }
     info = "Please choose your request below:"
@@ -71,21 +72,32 @@ if __name__ == "__main__":
                     thedate = datetime.date.fromisoformat(read_value)
                     break
         
-        if selected > 1:
+        if list(mapping.values())[selected] == "offsetvalue":
+            while True:
+                read_value = input("Enter the value you wish to offset by :> ")
+                if read_value == "":
+                    break
+
+                if read_value.isnumeric():
+                    offsetvalue = int(read_value)
+                    break
+        
+        if selected > 2:
             choice = list(mapping.values())[selected]
 
             result = \
             {
-                "one-month": lambda result: thedate + relativedelta(months=+1),
-                "three-months": lambda result: thedate + relativedelta(months=+3),
-                "six-months": lambda result: thedate + relativedelta(months=+6),
-                "one-hundred-days": lambda result: thedate + relativedelta(days=+100)
+                "days": lambda result: thedate + relativedelta(days=+offsetvalue),
+                "months": lambda result: thedate + relativedelta(months=+offsetvalue),
+                "years": lambda result: thedate + relativedelta(years=+offsetvalue),
             }[choice](0)
             
-            print("The date that is {} from {} is {}{}{}".format(
-                list(mapping.keys())[selected].lower(),
+            print("The date that is {} {} from {} is {}{}{}{}".format(
+                offsetvalue,
+                choice,
                 thedate,
-                Back.GREEN,
+                Fore.BLACK,
+                Back.LIGHTGREEN_EX,
                 result,
                 Style.RESET_ALL
             ))
