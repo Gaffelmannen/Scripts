@@ -83,7 +83,7 @@ class FantasyFootballScraper:
     CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 60
     
     def __init__(self):
-        self.tempfilename = "temp-{}.txt".format(selectedLeagueAndSource)
+        self.tempfilename = "temp/temp-{}.txt".format(selectedLeagueAndSource)
         self.pageurl = sources[selectedLeagueAndSource]
         self.source = selectedLeagueAndSource.split("-")[1]
 
@@ -99,7 +99,7 @@ class FantasyFootballScraper:
         self.FIREFOX_OPTS.set_preference("general.useragent.override","Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0")
 
         # Gecko
-        self.GECKODRIVER_LOG = 'geckodriver.log'
+        self.GECKODRIVER_LOG = "logs/geckodriver.log"
 
     def _save_to_file(self, content):
         f = open(self.tempfilename, "w", encoding="utf-8")
@@ -249,8 +249,8 @@ class FantasyFootballScraper:
 
 def show_results(selectedLeagueAndSource):
     league = selectedLeagueAndSource.split("-")[0]
-    team_filename = "{0}-team.txt".format(league)
-    prospects_filename = "{}-prospects.txt".format(league)
+    team_filename = "data/{0}-team.txt".format(league)
+    prospects_filename = "data/{}-prospects.txt".format(league)
 
     s = FantasyFootballScraper()
     injuries = s.get_injuries()

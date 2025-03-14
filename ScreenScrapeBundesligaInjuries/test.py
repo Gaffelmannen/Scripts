@@ -6,7 +6,7 @@ from PIL import Image
 
 def get_all_players():
     players=[]
-    with open(r"allplayers.txt", "r") as file:
+    with open(r"data/allplayers.txt", "r") as file:
         for line in file:
             parts = line.split("	")
             if len(parts) > 5 and parts[2] != "Name":
@@ -19,10 +19,10 @@ def read_players_from_image():
     img = Image.open(img_path)
     text= tess.image_to_string(img)
 
-    with open(r"das.txt", "w") as file:
+    with open(r"data/das.txt", "w") as file:
         print(text, file=file)
 
-    with open(r"das.txt", "r") as file:
+    with open(r"data/das.txt", "r") as file:
         for line in file:
             line = line.strip()
             if len(line) > 1:
