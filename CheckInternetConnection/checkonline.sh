@@ -1,10 +1,16 @@
 #!/bin/bash
 
-set -e
+set +e
 
 # Fundamenta
 hostname=www.sunet.se
 speed_check_url='https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_1920_18MG.mp4'
+
+# Check connection
+while ! ping -c1 $hostname &>/dev/null
+	do echo "No internet connection. - `date`"
+	sleep 1
+done
 
 # Get information from ipinfo
 data=`curl -s ipinfo.io`
@@ -19,12 +25,6 @@ case "${unameOut}" in
     MSYS_NT*)   machine=MSys;;
     *)          machine="UNKNOWN:${unameOut}"
 esac
-
-# Check connection
-while ! ping -c1 $hostname &>/dev/null
-	do echo "No internet connection. - `date`"
-	sleep 1
-done
 
 # Get local IP
 if [ $machine == "Mac" ]; then
