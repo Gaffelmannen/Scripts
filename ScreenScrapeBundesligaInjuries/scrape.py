@@ -20,6 +20,8 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
+from fake_useragent import UserAgent
+
 title =  r"""
     ______            __
    / ____/___ _____  / /_____ ________  __
@@ -96,7 +98,8 @@ class FantasyFootballScraper:
         self.FIREFOX_OPTS.set_preference("browser.cache.offline.enable", False)
         self.FIREFOX_OPTS.set_preference("network.http.use-cache", False)
         self.FIREFOX_OPTS.set_preference("javascript.enabled", True)
-        self.FIREFOX_OPTS.set_preference("general.useragent.override","Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0")
+        self.FIREFOX_OPTS.set_preference("general.useragent.override", UserAgent().random)
+        #self.FIREFOX_OPTS.set_preference("general.useragent.override","Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0")
 
         # Gecko
         self.GECKODRIVER_LOG = "logs/geckodriver.log"
@@ -114,11 +117,18 @@ class FantasyFootballScraper:
 
     def _read_from_remote_source(self):
         data = {}
-        driver = webdriver.Firefox(
-            options=self.FIREFOX_OPTS,
-            service_log_path=self.GECKODRIVER_LOG
+
+        service = Service(
+            service_log_path=self.GECKODRIVER_LOG,
         )
+        
+        driver = webdriver.Firefox(
+            service=service,
+            options=self.FIREFOX_OPTS
+        )
+        
         driver.get(self.pageurl)
+        
         if self.source == "onlinebetting":
             elements_teams = driver.find_elements('xpath', '//h2[@class="injury-container__team-name"]')
             elements_injuries = driver.find_elements('xpath', '//div[@class="injury-table-container"]')

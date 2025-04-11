@@ -3,3 +3,4 @@ selenium==4.9.0
 bs4
 simple-term-menu>=1.6.4
 colorama>=0.4.6
+fake-useragent>=2.1.0
