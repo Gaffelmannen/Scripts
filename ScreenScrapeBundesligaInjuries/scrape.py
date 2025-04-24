@@ -3,6 +3,7 @@
 
 import os
 import io
+import re
 import json
 import time
 import random
@@ -10,6 +11,7 @@ import random
 from colorama import Fore, Back, Style
 
 import simple_term_menu as stm
+from prettytable import PrettyTable
 
 from bs4 import BeautifulSoup
 
@@ -60,7 +62,7 @@ user_agents = [
 
 headers = {
     'authority': 'www.online-betting.me.uk',
-    'user-agent': random.choice(user_agents),
+    'user-agent': UserAgent().random, #random.choice(user_agents),
     'method': 'POST',
     'scheme': 'https',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -77,17 +79,27 @@ sources = {
     "bundesliga-betinf" : "https://www.betinf.com/germany_injured.htm",
     "premierleague-sportsgambler" : "https://www.sportsgambler.com/injuries/football/england-premier-league/",
     "premierleague-onlinebetting" : "https://www.online-betting.me.uk/injuries/english-premier-league-injuries-and-suspensions",
-    "premierleague-betinf" : "https://www.betinf.com/england_injured.htm"
+    "premierleague-betinf" : "https://www.betinf.com/england_injured.htm",
+    "bundesliga-stats-goals" : "https://www.bundesliga.com/en/bundesliga/stats/players/goals",
+    "bundesliga-stats-assists" : "https://www.bundesliga.com/en/bundesliga/stats/players/assists"
 }
 
 class FantasyFootballScraper:
 
     CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 60
     
-    def __init__(self):
-        self.tempfilename = "temp/temp-{}.txt".format(selectedLeagueAndSource)
-        self.pageurl = sources[selectedLeagueAndSource]
-        self.source = selectedLeagueAndSource.split("-")[1]
+    def __init__(self, sls, url=None, filename=None):
+        self.source = sls.split("-")[1]
+
+        if url == None:
+            self.pageurl = sources[sls]
+        else:
+            self.pageurl = url
+
+        if filename == None:
+            self.tempfilename = "temp/temp-{}.txt".format(sls)
+        else:
+            self.tempfilename = "temp/temp-{}.txt".format(filename)
 
         # FireFox Options
         self.FIREFOX_OPTS = Options()
@@ -114,6 +126,115 @@ class FantasyFootballScraper:
         with io.open(self.tempfilename, "r", encoding="utf8") as f:
             text = f.read()
         return text
+    
+    def read_stats_goals(self):
+        goals = []
+
+        if os.path.exists(self.tempfilename):
+            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
+                read_from_remote = False
+        
+        if not read_from_remote:
+            with open(self.tempfilename) as f:
+                encoded_str = json.load(f)
+                return encoded_str
+
+        service = Service(
+            service_log_path=self.GECKODRIVER_LOG,
+        )
+
+        driver = webdriver.Firefox(
+            service=service,
+            options=self.FIREFOX_OPTS
+        )
+        
+        driver.get(self.pageurl)
+
+        players_first_names = driver.find_elements('xpath', '//span[@class="first"]')
+        players_last_names = driver.find_elements('xpath', '//span[@class="last font-weight-bold"]')
+        players_number_of_goals = driver.find_elements('xpath', '//span[@class="value fixed fixed-large" or @class="value"]')
+
+        if debug:
+            print(f"players_first_names length = {len(players_first_names)}")
+            print(f"players_last_names length = {len(players_last_names)}")
+            print(f"players_number_of_goals length = {len(players_number_of_goals)}")
+
+        for i in range(0, len(players_number_of_goals)):
+            player_first_name = players_first_names[i].get_attribute("innerText").lstrip()
+            player_last_name = players_last_names[i].get_attribute("innerHTML").lstrip()
+            player_number_of_goals = players_number_of_goals[i].get_attribute("innerHTML")
+            player_full_name = f"{player_first_name} {player_last_name}"
+            goals.append(
+                "{} - {}".format(
+                    player_full_name,
+                    re.sub("<span _ngcontent-ng-c381919089=\"\" class=\"underlay\" style=\"background-color: #([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3});\"></span>", r"",  player_number_of_goals).strip()
+                )
+            )
+            
+        json_str = json.dumps(goals, indent=4, sort_keys=True)
+        encoded_str = json_str.encode('latin-1').decode('unicode-escape')
+        self._save_to_file(encoded_str)
+        driver.close()
+
+        return encoded_str
+
+    def read_stats_assists(self):
+        assists = []
+
+        read_from_remote = True
+
+        if os.path.exists(self.tempfilename):
+            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
+                read_from_remote = False
+        
+        if not read_from_remote:
+            with open(self.tempfilename) as f:
+                encoded_str = json.load(f)
+                return encoded_str
+
+        service = Service(
+            service_log_path=self.GECKODRIVER_LOG,
+        )
+
+        driver = webdriver.Firefox(
+            service=service,
+            options=self.FIREFOX_OPTS
+        )
+        
+        driver.get(self.pageurl)
+
+        players_first_names = driver.find_elements('xpath', '//span[@class="first"]')
+        players_last_names = driver.find_elements('xpath', '//span[@class="last font-weight-bold"]')
+        players_number_of_assists = driver.find_elements('xpath', '//span[@class="value fixed fixed-large" or @class="value"]')
+
+        if debug:
+            print(f"players_first_names length = {len(players_first_names)}")
+            print(f"players_last_names length = {len(players_last_names)}")
+            print(f"players_number_of_goals length = {len(players_number_of_assists)}")
+
+        for i in range(0, len(players_number_of_assists)):
+            player_first_name = players_first_names[i].get_attribute("innerText").lstrip()
+            player_last_name = players_last_names[i].get_attribute("innerHTML").lstrip()
+            player_number_of_goals = players_number_of_assists[i].get_attribute("innerHTML")
+            player_full_name = f"{player_first_name} {player_last_name}"
+            assists.append(
+                "{} - {}".format(
+                    player_full_name,
+                    re.sub("<span _ngcontent-ng-c381919089=\"\" class=\"underlay\" style=\"background-color: #([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3});\"></span>", r"",  player_number_of_goals).strip()
+                )
+            )
+
+        #dict(sorted(assists.items(), key=lambda item: item[1]))
+        json_str = json.dumps(assists, indent=4, sort_keys=True)
+        encoded_str = json_str.encode('latin-1').decode('unicode-escape')
+        self._save_to_file(encoded_str)
+        driver.close()
+
+        return encoded_str
 
     def _read_from_remote_source(self):
         data = {}
@@ -257,12 +378,38 @@ class FantasyFootballScraper:
 
         return self._find_injuried_players()
 
+def show_stats(selectedLeagueAndSource):
+    s = FantasyFootballScraper(
+        selectedLeagueAndSource, 
+        url=sources["bundesliga-stats-goals"],
+        filename="bundesliga-stats-goals")
+    goals = s.read_stats_goals()
+
+    s = FantasyFootballScraper(
+        selectedLeagueAndSource,
+        url=sources["bundesliga-stats-assists"],
+        filename="bundesliga-stats-assists")
+    assists = s.read_stats_assists()
+
+    goal_table = PrettyTable(["Player", "Goals"])
+    for row in goals:
+        cols = row.split("-")
+        goal_table.add_row([cols[0], cols[1]])
+    print(goal_table)
+
+    assist_table = PrettyTable(["Player", "Assists"])
+    for row in assists:
+        cols = row.split("-")
+        assist_table.add_row([cols[0], cols[1]])
+    print(assist_table)
+
+
 def show_results(selectedLeagueAndSource):
     league = selectedLeagueAndSource.split("-")[0]
     team_filename = "data/{0}-team.txt".format(league)
     prospects_filename = "data/{}-prospects.txt".format(league)
 
-    s = FantasyFootballScraper()
+    s = FantasyFootballScraper(selectedLeagueAndSource)
     injuries = s.get_injuries()
 
     with open(team_filename, "r") as f:
@@ -319,12 +466,13 @@ if __name__ == "__main__":
     while True:
         mapping = \
                 { \
-                    "Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
-                    "Bundesliga - BetInf" : "bundesliga-betinf", \
-                    #"Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
-                    "Premier League - Sportsgambler" : "premierleague-sportsgambler", \
-                    "Premier League - BetInf" : "premierleague-betinf", \
-                    #"Premier League - Onlinebetting" : "premierleague-onlinebetting", \
+                    "Injuries - Bundesliga - Sportsgambler" : "bundesliga-sportsgambler", \
+                    "Injuries - Bundesliga - BetInf" : "bundesliga-betinf", \
+                    #"Injuries - Bundesliga - Onlinebetting" : "bundesliga-onlinebetting", \
+                    "Injuries - Premier League - Sportsgambler" : "premierleague-sportsgambler", \
+                    "Injuries - Premier League - BetInf" : "premierleague-betinf", \
+                    #"Injuries - Premier League - Onlinebetting" : "premierleague-onlinebetting", \
+                    "Stats - Bundesliga" : "bundesliga-stats" , \
                     "Quit" : "Quit"
                 }
         info = "Please choose league and source below:"
@@ -350,7 +498,12 @@ if __name__ == "__main__":
         if list(mapping.keys())[selected] == "Quit":
             print("Thanks for using Screen Scraper for Fantasy football.")
             break
+        elif list(mapping.values())[selected] == "bundesliga-stats":
+            selectedLeagueAndSource = list(mapping.values())[selected]
+            show_stats(selectedLeagueAndSource)
+        else:
+            selectedLeagueAndSource = list(mapping.values())[selected]
+            show_results(selectedLeagueAndSource)
 
-        selectedLeagueAndSource = list(mapping.values())[selected]
-        show_results(selectedLeagueAndSource)
+
         print("")
