@@ -4,6 +4,7 @@
 import os
 import io
 import re
+import sys
 import json
 import time
 import random
@@ -81,8 +82,32 @@ sources = {
     "premierleague-onlinebetting" : "https://www.online-betting.me.uk/injuries/english-premier-league-injuries-and-suspensions",
     "premierleague-betinf" : "https://www.betinf.com/england_injured.htm",
     "bundesliga-stats-goals" : "https://www.bundesliga.com/en/bundesliga/stats/players/goals",
-    "bundesliga-stats-assists" : "https://www.bundesliga.com/en/bundesliga/stats/players/assists"
+    "bundesliga-stats-assists" : "https://www.bundesliga.com/en/bundesliga/stats/players/assists",
+    "bundesliga-stats-duelswon" : "https://www.bundesliga.com/en/bundesliga/stats/players/duels-won",
+    "bundesliga-stats-crosses" : "https://www.bundesliga.com/en/bundesliga/stats/players/crosses",
+    "bundesliga-stats-passes" : "https://www.bundesliga.com/en/bundesliga/stats/players/passes"
 }
+
+stat_headers = [
+    "Goals",
+    "Assists",
+    "Shots",
+    "Shots against post and bar",
+    "Top speed (km/h)",
+    "Own goals",
+    "Penalties",
+    "Penalties scored",
+    "Successful passes from open play (%)",
+    "Aerial duels won",
+    "Crosses from open play",
+    "Yellow cards",
+    "Cards",
+    "Fouls committed",
+    "Distance covered (km)",
+    "Sprints",
+    "Intensive runs",
+    "Shots saved"
+]
 
 class FantasyFootballScraper:
 
@@ -92,7 +117,10 @@ class FantasyFootballScraper:
         self.source = sls.split("-")[1]
 
         if url == None:
-            self.pageurl = sources[sls]
+            try:
+                self.pageurl = sources[sls]
+            except:
+                self.pageurl = None
         else:
             self.pageurl = url
 
@@ -111,7 +139,6 @@ class FantasyFootballScraper:
         self.FIREFOX_OPTS.set_preference("network.http.use-cache", False)
         self.FIREFOX_OPTS.set_preference("javascript.enabled", True)
         self.FIREFOX_OPTS.set_preference("general.useragent.override", UserAgent().random)
-        #self.FIREFOX_OPTS.set_preference("general.useragent.override","Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0")
 
         # Gecko
         self.GECKODRIVER_LOG = "logs/geckodriver.log"
@@ -127,64 +154,14 @@ class FantasyFootballScraper:
             text = f.read()
         return text
     
-    def read_stats_goals(self):
-        goals = []
-
-        if os.path.exists(self.tempfilename):
-            fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
-            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
-            if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
-                read_from_remote = False
-        
-        if not read_from_remote:
-            with open(self.tempfilename) as f:
-                encoded_str = json.load(f)
-                return encoded_str
-
-        service = Service(
-            service_log_path=self.GECKODRIVER_LOG,
-        )
-
-        driver = webdriver.Firefox(
-            service=service,
-            options=self.FIREFOX_OPTS
-        )
-        
-        driver.get(self.pageurl)
-
-        players_first_names = driver.find_elements('xpath', '//span[@class="first"]')
-        players_last_names = driver.find_elements('xpath', '//span[@class="last font-weight-bold"]')
-        players_number_of_goals = driver.find_elements('xpath', '//span[@class="value fixed fixed-large" or @class="value"]')
-
-        if debug:
-            print(f"players_first_names length = {len(players_first_names)}")
-            print(f"players_last_names length = {len(players_last_names)}")
-            print(f"players_number_of_goals length = {len(players_number_of_goals)}")
-
-        for i in range(0, len(players_number_of_goals)):
-            player_first_name = players_first_names[i].get_attribute("innerText").lstrip()
-            player_last_name = players_last_names[i].get_attribute("innerHTML").lstrip()
-            player_number_of_goals = players_number_of_goals[i].get_attribute("innerHTML")
-            player_full_name = f"{player_first_name} {player_last_name}"
-            goals.append(
-                "{} - {}".format(
-                    player_full_name,
-                    re.sub("<span _ngcontent-ng-c381919089=\"\" class=\"underlay\" style=\"background-color: #([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3});\"></span>", r"",  player_number_of_goals).strip()
-                )
-            )
-            
-        json_str = json.dumps(goals, indent=4, sort_keys=True)
-        encoded_str = json_str.encode('latin-1').decode('unicode-escape')
-        self._save_to_file(encoded_str)
-        driver.close()
-
-        return encoded_str
-
-    def read_stats_assists(self):
-        assists = []
-
+    def read_stats(self, url, filename):
+        driver = None
+        stats = []
         read_from_remote = True
 
+        self.pageurl = url
+        self.tempfilename = "temp/temp-{}.txt".format(filename)
+
         if os.path.exists(self.tempfilename):
             fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
             ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
@@ -200,41 +177,68 @@ class FantasyFootballScraper:
             service_log_path=self.GECKODRIVER_LOG,
         )
 
+        options = self.FIREFOX_OPTS
+        options.add_argument("window-size=441, 795")
+
         driver = webdriver.Firefox(
             service=service,
-            options=self.FIREFOX_OPTS
+            options=options
         )
-        
         driver.get(self.pageurl)
 
-        players_first_names = driver.find_elements('xpath', '//span[@class="first"]')
-        players_last_names = driver.find_elements('xpath', '//span[@class="last font-weight-bold"]')
-        players_number_of_assists = driver.find_elements('xpath', '//span[@class="value fixed fixed-large" or @class="value"]')
+        rows = driver.find_elements(By.XPATH, "//div[@class='footer']")
+        rows += driver.find_elements(By.CLASS_NAME, "rankingMetric")
+        rows += driver.find_elements(By.TAG_NAME, "a")
 
-        if debug:
-            print(f"players_first_names length = {len(players_first_names)}")
-            print(f"players_last_names length = {len(players_last_names)}")
-            print(f"players_number_of_goals length = {len(players_number_of_assists)}")
+        print(f"rows={len(rows)}")
+        
+        for p in rows:
 
-        for i in range(0, len(players_number_of_assists)):
-            player_first_name = players_first_names[i].get_attribute("innerText").lstrip()
-            player_last_name = players_last_names[i].get_attribute("innerHTML").lstrip()
-            player_number_of_goals = players_number_of_assists[i].get_attribute("innerHTML")
-            player_full_name = f"{player_first_name} {player_last_name}"
-            assists.append(
-                "{} - {}".format(
-                    player_full_name,
-                    re.sub("<span _ngcontent-ng-c381919089=\"\" class=\"underlay\" style=\"background-color: #([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3});\"></span>", r"",  player_number_of_goals).strip()
-                )
-            )
+            tags = p.get_attribute("innerHTML")
+            soup = BeautifulSoup(tags, 'html.parser')
 
-        #dict(sorted(assists.items(), key=lambda item: item[1]))
-        json_str = json.dumps(assists, indent=4, sort_keys=True)
+            footer = soup.find("div", {"class": "footer"})
+            if footer != None:
+                footer = footer.get_text().strip()
+            
+            first_name = soup.find("span", {"class": "first"})
+            if first_name != None:
+                first_name = first_name.get_text().strip()
+
+            last_name = soup.find("span", {"class": "last"})
+            if last_name != None:
+                last_name = last_name.get_text().strip()
+
+            number = soup.find("span", {"class" : "value fixed fixed-large"})
+            if number != None:
+                number = number.get_text().strip()
+            
+            metric = soup.find("span", {"class" : "metric"})
+            if metric != None:
+                metric = metric.get_text().strip()
+            
+            playerRows = soup.find("a", {"class" : "playerRow"})
+            if playerRows != None:
+                playerRows = playerRows.get_text().strip()
+            
+            if  (playerRows == metric and number is not None) or \
+                (footer is not None and number is not None):
+                stats.append(
+                    "{} {} <> {}".format(
+                    first_name,
+                    last_name,
+                    number
+                ))
+        
+        json_str = json.dumps(stats, indent=4, sort_keys=True)
         encoded_str = json_str.encode('latin-1').decode('unicode-escape')
         self._save_to_file(encoded_str)
         driver.close()
 
-        return encoded_str
+        with open(self.tempfilename) as f:
+            data = json.load(f)
+        return data
+        
 
     def _read_from_remote_source(self):
         data = {}
@@ -379,29 +383,42 @@ class FantasyFootballScraper:
         return self._find_injuried_players()
 
 def show_stats(selectedLeagueAndSource):
-    s = FantasyFootballScraper(
-        selectedLeagueAndSource, 
-        url=sources["bundesliga-stats-goals"],
-        filename="bundesliga-stats-goals")
-    goals = s.read_stats_goals()
-
-    s = FantasyFootballScraper(
-        selectedLeagueAndSource,
-        url=sources["bundesliga-stats-assists"],
-        filename="bundesliga-stats-assists")
-    assists = s.read_stats_assists()
+    s = FantasyFootballScraper(selectedLeagueAndSource)
+    goals = s.read_stats(url=sources["bundesliga-stats-goals"], filename="bundesliga-stats-goals")
+    assists = s.read_stats(url=sources["bundesliga-stats-assists"], filename="bundesliga-stats-assists")
+    duelswon = s.read_stats(url=sources["bundesliga-stats-duelswon"], filename="bundesliga-stats-duelswon")
+    crosses = s.read_stats(url=sources["bundesliga-stats-crosses"], filename="bundesliga-stats-crosses")
+    passes = s.read_stats(url=sources["bundesliga-stats-passes"], filename="bundesliga-stats-passes")
 
     goal_table = PrettyTable(["Player", "Goals"])
     for row in goals:
-        cols = row.split("-")
+        cols = row.split("<>")
         goal_table.add_row([cols[0], cols[1]])
     print(goal_table)
 
     assist_table = PrettyTable(["Player", "Assists"])
     for row in assists:
-        cols = row.split("-")
+        cols = row.split("<>")
         assist_table.add_row([cols[0], cols[1]])
     print(assist_table)
+
+    duelswon_table = PrettyTable(["Player", "Duels won"])
+    for row in duelswon:
+        cols = row.split("<>")
+        duelswon_table.add_row([cols[0], cols[1]])
+    print(duelswon_table)
+
+    crosses_table = PrettyTable(["Player", "Crosses"])
+    for row in crosses:
+        cols = row.split("<>")
+        crosses_table.add_row([cols[0], cols[1]])
+    print(crosses_table)
+
+    passes_table = PrettyTable(["Player", "Passes"])
+    for row in passes:
+        cols = row.split("<>")
+        passes_table.add_row([cols[0], cols[1]])
+    print(passes_table)
 
 
 def show_results(selectedLeagueAndSource):
