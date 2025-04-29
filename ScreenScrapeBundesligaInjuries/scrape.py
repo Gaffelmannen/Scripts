@@ -48,6 +48,8 @@ title =  r"""
 
 debug = False
 
+separator = "<>"
+
 types = {
     "/images/injury/red.png" : "Suspended",
     "/images/injury/cross.png" : "Injured"
@@ -85,7 +87,9 @@ sources = {
     "bundesliga-stats-assists" : "https://www.bundesliga.com/en/bundesliga/stats/players/assists",
     "bundesliga-stats-duelswon" : "https://www.bundesliga.com/en/bundesliga/stats/players/duels-won",
     "bundesliga-stats-crosses" : "https://www.bundesliga.com/en/bundesliga/stats/players/crosses",
-    "bundesliga-stats-passes" : "https://www.bundesliga.com/en/bundesliga/stats/players/passes"
+    "bundesliga-stats-passes" : "https://www.bundesliga.com/en/bundesliga/stats/players/passes",
+    "bundesliga-stats-intensiveruns" : "https://www.bundesliga.com/en/bundesliga/stats/players/intensive-runs",
+    "bundesliga-stats-saves" : "https://www.bundesliga.com/en/bundesliga/stats/players/goalkeeper-saves"
 }
 
 stat_headers = [
@@ -154,7 +158,7 @@ class FantasyFootballScraper:
             text = f.read()
         return text
     
-    def read_stats(self, url, filename):
+    def read_bundesliga_stats(self, url, filename):
         driver = None
         stats = []
         read_from_remote = True
@@ -187,10 +191,34 @@ class FantasyFootballScraper:
         driver.get(self.pageurl)
 
         rows = driver.find_elements(By.XPATH, "//div[@class='footer']")
-        rows += driver.find_elements(By.CLASS_NAME, "rankingMetric")
-        rows += driver.find_elements(By.TAG_NAME, "a")
+        for p in rows:
 
-        print(f"rows={len(rows)}")
+            tags = p.get_attribute("innerHTML")
+            soup = BeautifulSoup(tags, 'html.parser')
+            
+            first_name = soup.find("span", {"class": "first"})
+            if first_name != None:
+                first_name = first_name.get_text().strip()
+
+            last_name = soup.find("span", {"class": "last"})
+            if last_name != None:
+                last_name = last_name.get_text().strip()
+
+            number = soup.find("span", {"class" : "value"})
+            if number != None:
+                number = number.get_text().strip()
+            
+            stats.append(
+                "{} {} {} {}".format(
+                first_name,
+                last_name,
+                separator,
+                number
+            ))
+            break
+        
+        rows = driver.find_elements(By.CLASS_NAME, "rankingMetric")
+        rows += driver.find_elements(By.TAG_NAME, "a")
         
         for p in rows:
 
@@ -223,17 +251,21 @@ class FantasyFootballScraper:
             
             if  (playerRows == metric and number is not None) or \
                 (footer is not None and number is not None):
-                stats.append(
-                    "{} {} <> {}".format(
-                    first_name,
-                    last_name,
-                    number
-                ))
+                name = f"{first_name} {last_name}"
+                found = any(name in word for word in stats)
+                if not found:
+                    stats.append(
+                        "{} {} {} {}".format(
+                        first_name,
+                        last_name,
+                        separator,
+                        number
+                    ))
         
         json_str = json.dumps(stats, indent=4, sort_keys=True)
         encoded_str = json_str.encode('latin-1').decode('unicode-escape')
         self._save_to_file(encoded_str)
-        driver.close()
+        driver.quit()
 
         with open(self.tempfilename) as f:
             data = json.load(f)
@@ -277,7 +309,7 @@ class FantasyFootballScraper:
                 data[team_name] = injured_players
 
         self._save_to_file(json.dumps(data, indent=4, sort_keys=True))
-        driver.close()
+        driver.quit()
 
     def _getteams(self):
         read_from_remote = True
@@ -384,15 +416,17 @@ class FantasyFootballScraper:
 
 def show_stats(selectedLeagueAndSource):
     s = FantasyFootballScraper(selectedLeagueAndSource)
-    goals = s.read_stats(url=sources["bundesliga-stats-goals"], filename="bundesliga-stats-goals")
-    assists = s.read_stats(url=sources["bundesliga-stats-assists"], filename="bundesliga-stats-assists")
-    duelswon = s.read_stats(url=sources["bundesliga-stats-duelswon"], filename="bundesliga-stats-duelswon")
-    crosses = s.read_stats(url=sources["bundesliga-stats-crosses"], filename="bundesliga-stats-crosses")
-    passes = s.read_stats(url=sources["bundesliga-stats-passes"], filename="bundesliga-stats-passes")
+    goals = s.read_bundesliga_stats(url=sources["bundesliga-stats-goals"], filename="bundesliga-stats-goals")
+    assists = s.read_bundesliga_stats(url=sources["bundesliga-stats-assists"], filename="bundesliga-stats-assists")
+    duelswon = s.read_bundesliga_stats(url=sources["bundesliga-stats-duelswon"], filename="bundesliga-stats-duelswon")
+    crosses = s.read_bundesliga_stats(url=sources["bundesliga-stats-crosses"], filename="bundesliga-stats-crosses")
+    passes = s.read_bundesliga_stats(url=sources["bundesliga-stats-passes"], filename="bundesliga-stats-passes")
+    intensiveruns = s.read_bundesliga_stats(url=sources["bundesliga-stats-intensiveruns"], filename="bundesliga-stats-intensiveruns")
+    saves = s.read_bundesliga_stats(url=sources["bundesliga-stats-saves"], filename="bundesliga-stats-saves")
 
     goal_table = PrettyTable(["Player", "Goals"])
     for row in goals:
-        cols = row.split("<>")
+        cols = row.split(separator)
         goal_table.add_row([cols[0], cols[1]])
     print(goal_table)
 
@@ -404,21 +438,33 @@ def show_stats(selectedLeagueAndSource):
 
     duelswon_table = PrettyTable(["Player", "Duels won"])
     for row in duelswon:
-        cols = row.split("<>")
+        cols = row.split(separator)
         duelswon_table.add_row([cols[0], cols[1]])
     print(duelswon_table)
 
     crosses_table = PrettyTable(["Player", "Crosses"])
     for row in crosses:
-        cols = row.split("<>")
+        cols = row.split(separator)
         crosses_table.add_row([cols[0], cols[1]])
     print(crosses_table)
 
     passes_table = PrettyTable(["Player", "Passes"])
     for row in passes:
-        cols = row.split("<>")
+        cols = row.split(separator)
         passes_table.add_row([cols[0], cols[1]])
     print(passes_table)
+
+    intensiveruns_table = PrettyTable(["Player", "Intensive runs"])
+    for row in intensiveruns:
+        cols = row.split(separator)
+        intensiveruns_table.add_row([cols[0], cols[1]])
+    print(intensiveruns_table)
+
+    saves_table = PrettyTable(["Player", "Saves"])
+    for row in saves:
+        cols = row.split(separator)
+        saves_table.add_row([cols[0], cols[1]])
+    print(saves_table)
 
 
 def show_results(selectedLeagueAndSource):
