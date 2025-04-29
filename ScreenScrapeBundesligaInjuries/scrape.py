@@ -92,26 +92,15 @@ sources = {
     "bundesliga-stats-saves" : "https://www.bundesliga.com/en/bundesliga/stats/players/goalkeeper-saves"
 }
 
-stat_headers = [
-    "Goals",
-    "Assists",
-    "Shots",
-    "Shots against post and bar",
-    "Top speed (km/h)",
-    "Own goals",
-    "Penalties",
-    "Penalties scored",
-    "Successful passes from open play (%)",
-    "Aerial duels won",
-    "Crosses from open play",
-    "Yellow cards",
-    "Cards",
-    "Fouls committed",
-    "Distance covered (km)",
-    "Sprints",
-    "Intensive runs",
-    "Shots saved"
-]
+bundesliga_stat_headers = {
+    "bundesliga-stats-goals" : ["Player", "Goals"],
+    "bundesliga-stats-assists" : ["Player", "Assists"],
+    "bundesliga-stats-duelswon" : ["Player", "Duelswon"],
+    "bundesliga-stats-crosses" : ["Player", "Crosses"],
+    "bundesliga-stats-passes" : ["Player", "Passes"],
+    "bundesliga-stats-intensiveruns" : ["Player", "Intensive runs"],
+    "bundesliga-stats-saves" : ["Player", "Saves"],
+}
 
 class FantasyFootballScraper:
 
@@ -168,7 +157,7 @@ class FantasyFootballScraper:
 
         if os.path.exists(self.tempfilename):
             fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
-            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 60
             if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
                 read_from_remote = False
         
@@ -317,7 +306,7 @@ class FantasyFootballScraper:
 
         if os.path.exists(self.tempfilename):
             fileLastUpdatedTime = os.stat(self.tempfilename).st_mtime
-            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 240
+            ageOfFileInMinutes = (time.time() - fileLastUpdatedTime) / 60
             if ageOfFileInMinutes < self.CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES:
                 read_from_remote = False
 
@@ -414,58 +403,20 @@ class FantasyFootballScraper:
 
         return self._find_injuried_players()
 
+
+def generate_table(data, headers):
+    t = PrettyTable(headers)
+    for row in data:
+        cols = row.split(separator)
+        t.add_row([cols[0], cols[1]])
+    print(t)
+
 def show_stats(selectedLeagueAndSource):
     s = FantasyFootballScraper(selectedLeagueAndSource)
-    goals = s.read_bundesliga_stats(url=sources["bundesliga-stats-goals"], filename="bundesliga-stats-goals")
-    assists = s.read_bundesliga_stats(url=sources["bundesliga-stats-assists"], filename="bundesliga-stats-assists")
-    duelswon = s.read_bundesliga_stats(url=sources["bundesliga-stats-duelswon"], filename="bundesliga-stats-duelswon")
-    crosses = s.read_bundesliga_stats(url=sources["bundesliga-stats-crosses"], filename="bundesliga-stats-crosses")
-    passes = s.read_bundesliga_stats(url=sources["bundesliga-stats-passes"], filename="bundesliga-stats-passes")
-    intensiveruns = s.read_bundesliga_stats(url=sources["bundesliga-stats-intensiveruns"], filename="bundesliga-stats-intensiveruns")
-    saves = s.read_bundesliga_stats(url=sources["bundesliga-stats-saves"], filename="bundesliga-stats-saves")
 
-    goal_table = PrettyTable(["Player", "Goals"])
-    for row in goals:
-        cols = row.split(separator)
-        goal_table.add_row([cols[0], cols[1]])
-    print(goal_table)
-
-    assist_table = PrettyTable(["Player", "Assists"])
-    for row in assists:
-        cols = row.split("<>")
-        assist_table.add_row([cols[0], cols[1]])
-    print(assist_table)
-
-    duelswon_table = PrettyTable(["Player", "Duels won"])
-    for row in duelswon:
-        cols = row.split(separator)
-        duelswon_table.add_row([cols[0], cols[1]])
-    print(duelswon_table)
-
-    crosses_table = PrettyTable(["Player", "Crosses"])
-    for row in crosses:
-        cols = row.split(separator)
-        crosses_table.add_row([cols[0], cols[1]])
-    print(crosses_table)
-
-    passes_table = PrettyTable(["Player", "Passes"])
-    for row in passes:
-        cols = row.split(separator)
-        passes_table.add_row([cols[0], cols[1]])
-    print(passes_table)
-
-    intensiveruns_table = PrettyTable(["Player", "Intensive runs"])
-    for row in intensiveruns:
-        cols = row.split(separator)
-        intensiveruns_table.add_row([cols[0], cols[1]])
-    print(intensiveruns_table)
-
-    saves_table = PrettyTable(["Player", "Saves"])
-    for row in saves:
-        cols = row.split(separator)
-        saves_table.add_row([cols[0], cols[1]])
-    print(saves_table)
-
+    for header_key in bundesliga_stat_headers.keys():
+        data = s.read_bundesliga_stats(url=sources[header_key], filename=header_key)
+        generate_table(data, headers=bundesliga_stat_headers[header_key])
 
 def show_results(selectedLeagueAndSource):
     league = selectedLeagueAndSource.split("-")[0]
@@ -567,6 +518,5 @@ if __name__ == "__main__":
         else:
             selectedLeagueAndSource = list(mapping.values())[selected]
             show_results(selectedLeagueAndSource)
-
 
         print("")
