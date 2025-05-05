@@ -102,6 +102,10 @@ bundesliga_stat_headers = {
     "bundesliga-stats-saves" : ["Player", "Saves"],
 }
 
+injury_and_suspension_headers = [
+    "Name", "Team", "Return date", "Type", "Note"
+]
+
 class FantasyFootballScraper:
 
     CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 60
@@ -404,11 +408,25 @@ class FantasyFootballScraper:
         return self._find_injuried_players()
 
 
-def generate_table(data, headers):
+def generate_table_with_two_columns(data, headers):
+
+    R = "\033[0;31;40m" # Red
+    G = "\033[0;32;40m" # Green
+    B = "\033[0;34;40m" # Blue
+    Y = "\033[0;33;40m" # Yellow
+    N = "\033[0m" # Reset
+
     t = PrettyTable(headers)
     for row in data:
         cols = row.split(separator)
         t.add_row([cols[0], cols[1]])
+    print(t)
+
+def generate_table_with_five_columns(data, headers):
+    t = PrettyTable(headers)
+    for row in data:
+        cols = row.split(separator)
+        t.add_row([cols[0], cols[1], cols[2], cols[3], cols[4]])
     print(t)
 
 def show_stats(selectedLeagueAndSource):
@@ -416,7 +434,7 @@ def show_stats(selectedLeagueAndSource):
 
     for header_key in bundesliga_stat_headers.keys():
         data = s.read_bundesliga_stats(url=sources[header_key], filename=header_key)
-        generate_table(data, headers=bundesliga_stat_headers[header_key])
+        generate_table_with_two_columns(data, headers=bundesliga_stat_headers[header_key])
 
 def show_results(selectedLeagueAndSource):
     league = selectedLeagueAndSource.split("-")[0]
@@ -438,18 +456,24 @@ def show_results(selectedLeagueAndSource):
 
     print("")
     print("- Squad -")
+    injured_squad=[]
     for injury in injuries:
         if injury[1] in players and injury[1] != "":
-            print(Fore.RED)
-            print("Note")
-            print("\tPlayer:\t{}".format(injury[1]))
-            print("\tType:\t{}".format(injury[2]))
-            print("\tReturn:\t{}".format(injury[3]))
-            print("\tInfo:\t{}".format(injury[4]))
-            print("\tTeam:\t{}".format(injury[0]))
-            print(Style.RESET_ALL)
+            injured_squad.append(
+                f"{injury[1].strip()}{separator} \
+                {injury[0].strip()}{separator} \
+                {injury[3].strip()}{separator} \
+                {injury[4].strip()}{separator} \
+                {injury[2].strip()}{separator}"
+            )
             number_of_injuries_in_squad += 1
     if number_of_injuries_in_squad > 0:
+        print(Fore.RED)
+        generate_table_with_five_columns(
+            headers=injury_and_suspension_headers,
+            data=injured_squad
+        )
+        print(Style.RESET_ALL)
         print("There are a total of {} injuries in the squad." \
             .format(number_of_injuries_in_squad))
     else:
@@ -457,16 +481,24 @@ def show_results(selectedLeagueAndSource):
     
     print("")
     print("- Prospects -")
+    injured_prospects=[]
     for injury in injuries:
         if injury[1] in prospects and injury[1] != "":
-            print("Note")
-            print("\tPlayer:\t{}".format(injury[1]))
-            print("\tType:\t{}".format(injury[2]))
-            print("\tReturn:\t{}".format(injury[3]))
-            print("\tInfo:\t{}".format(injury[4]))
-            print("\tTeam:\t{}".format(injury[0]))
+            injured_prospects.append(
+                f"{injury[1].strip()}{separator} \
+                {injury[0].strip()}{separator} \
+                {injury[3].strip()}{separator} \
+                {injury[4].strip()}{separator} \
+                {injury[2].strip()}{separator}"
+            )
             number_of_injuries_in_prospects += 1
     if number_of_injuries_in_prospects > 0:
+        print(Style.YELLOW)
+        generate_table_with_five_columns(
+            headers=injury_and_suspension_headers,
+            data=injured_prospects
+        )
+        print(Style.RESET_ALL)
         print("There are a total of {} injuries in the prospect list." \
             .format(number_of_injuries_in_prospects))
     else:
