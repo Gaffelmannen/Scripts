@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Football Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Fantasy Football Screenscraper</h1>
+
+            <h2>{{league.capitalize()}} injuries in squad</h2>
+            {% if injuries_squad %}
+            <table class="stats-table">
+                <tr>
+                    <th>Team</th>
+                    <th>Name</th>
+                    <th>Return date</th>
+                    <th>Type</th>
+                    <th>Note</th>
+                </tr>
+                
+                {% for injury in injuries_squad %}
+                <tr>
+                    <td>{{ injury["team"] }}</td>
+                    <td>{{ injury["name"] }}</td>
+                    <td>{{ injury["return_date"] }}</td>
+                    <td>{{ injury["type"] }}</td>
+                    <td>{{ injury["note"] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            No injuries to report.
+            {% endif %}
+
+            <h2>{{league.capitalize()}} injuries in prospects</h2>
+            {% if injuries_prospects %}
+            <table border="1px">
+                <tr>
+                    <th>Team</th>
+                    <th>Name</th>
+                    <th>Return date</th>
+                    <th>Type</th>
+                    <th>Note</th>
+                </tr>
+                {% for injury in injuries_prospects %}
+                <tr>
+                    <td>{{ injury["team"] }}</td>
+                    <td>{{ injury["name"] }}</td>
+                    <td>{{ injury["return_date"] }}</td>
+                    <td>{{ injury["type"] }}</td>
+                    <td>{{ injury["note"] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            No injuries to report.
+            {% endif %}
+
+            <p>Updated: {{ utc_dt }}</p>
+
+            <form name="back_form" method="POST" action="/">
+                <button onclick="javascript: document.getElementById('scrape_bundesliga_form').submit();">Back</button>
+            </form>
+
+    </div>
+
+</body>
+</html>

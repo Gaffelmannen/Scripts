@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Football Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Fantasy Football Screenscraper</h1>
+
+            <h2>{{league.capitalize()}} statistics</h2>
+            {% if stats %}
+            {% for i in range(stats|length) %}
+            <table class="stats-table">
+
+                <tr>
+                    <th>{{ captions[i][0] }}</th>
+                    <th>{{ captions[i][1] }}</th>
+                </tr>
+                
+                {% for stat in stats[i] %}
+                <tr>
+                    <td>{{ stat["name"] }}</td>
+                    <td>{{ stat["stat"] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endfor %}
+            {% else %}
+            No stats to report.
+            {% endif %}
+
+            <p>Updated: {{ utc_dt }}</p>
+
+            <form name="back_form" method="POST" action="/">
+                <button onclick="javascript: document.getElementById('scrape_bundesliga_form').submit();">Back</button>
+            </form>
+
+    </div>
+
+</body>
+</html>
