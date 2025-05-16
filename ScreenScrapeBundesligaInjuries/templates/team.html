@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Football Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <script>
+        function showNotification(message, success=true) {
+            const notification = document.getElementById('notification');
+            notification.style.backgroundColor = success ? '#4CAF50' : '#f44336';
+            notification.textContent = message;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function saveData(textareaId, league, type) {
+            const content = document.getElementById(textareaId).value;
+
+            fetch('/saveteam', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    league: league,
+                    type: type,
+                    data: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification('Data saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification(error, false);
+                //showNotification('An error occurred while saving data.', false);
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Fantasy Football Screenscraper</h1>
+
+        <h2>{{ league.capitalize() }} players in team</h2>
+        {% if team_players %}
+        <div class="stats-box">
+
+            <div class="stats-header">Team players</div>
+            <div class="stats-content">
+                <textarea id="text-{{league}}-team" class="edit-team">{{ team_players["data"] }}</textarea>
+            </div>
+
+            <button onclick="saveData('text-{{league}}-team', '{{league}}', 'team')">Save</button>
+        {% else %}
+            <p>No players in list.</p>
+        {% endif %}
+
+        <h2>{{ league.capitalize() }} players in prospects</h2>
+        {% if prospect_players %}
+        <div class="stats-box">
+            
+            <div class="stats-header">Prospect players</div>
+            <div class="stats-content">
+                <textarea id="text-{{league}}-prospects" class="edit-team">{{ prospect_players["data"] }}</textarea>
+            </div>
+                
+            <button onclick="saveData('text-{{league}}-prospects', '{{league}}', 'prospects')">Save</button>
+        </div>
+        {% else %}
+            <p>No players in list.</p>
+        {% endif %}
+
+        <p>Updated: {{ utc_dt }}</p>
+
+        <form name="back_form" method="POST" action="/">
+            <button type="submit">Back</button>
+        </form>
+    </div>
+
+    <div id="notification"></div>
+
+</body>
+</html>

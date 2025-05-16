@@ -26,6 +26,33 @@
         </div>
         {% endfor %}
 
+        <div class="injury_scraper">
+            <h2>Edit team</h2>
+
+            <h3>Bundesliga</h3>
+            <form name="edit_team_form" method="POST" action="/team">
+                {% if key in sources: %}
+                <p>{{key}}</p>
+                {% endif %}
+                <input type="hidden" name="sls" value="{{sls[0]}}">
+                <button onclick="javascript: document.getElementById('edit_team_form').submit();">Scrape</button>
+            </form>
+
+            <h3>Premier League</h3>
+            <form name="edit_team_form" method="POST" action="/team">
+                {% if key in sources: %}
+                <p>{{key}}</p>
+                {% endif %}
+                <input type="hidden" name="sls" value="{{sls[1]}}">
+                <button onclick="javascript: document.getElementById('edit_team_form').submit();">Scrape</button>
+            </form>
+        </div>
+        <div>
+            &nbsp;
+        </div>
+
+        <p>Updated: {{ utc_dt }}</p>
+
     </div>
 </body>
 </html>

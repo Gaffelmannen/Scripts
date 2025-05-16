@@ -444,8 +444,42 @@ class FantasyFootballScraper:
                 "stat": f"{columns[1]}"
             }
             stats.append(part)
-        print(stats)
         return stats
+    
+    def get_team_players_as_json(self, league):
+        content = ""
+        team_filename = "data/{}-team.txt".format(league)
+        with open(team_filename, "r") as f:
+            content = f.read()
+        json = {
+            "data": f"{content}"
+        }
+        return json
+    
+    def get_prospect_players_as_json(self, league):
+        content = ""
+        prospects_filename = "data/{}-prospects.txt".format(league)
+        with open(prospects_filename, "r") as f:
+            content = f.read()
+        json = {
+            "data": f"{content}"
+        }
+        return json
+    
+    def save_team_players_as_json(self, type, league, content):
+        success = False
+
+        try:
+            filename = f"data/{league}-{type}.txt"
+            f = open(filename, "w", encoding="utf-8")
+            f.write(content)
+            f.close()
+            success = True
+        except:
+            pass
+
+        return success
+
 
 
 

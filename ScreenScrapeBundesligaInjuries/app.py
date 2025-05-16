@@ -18,10 +18,11 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-
     return render_template("index.html",
+                           utc_dt=datetime.datetime.now(),
                            rows=leagues_and_sources_map,
-                           target="stats")
+                           target="stats",
+                           sls=["bundesliga-players", "premierleague-players"])
 
 @app.route("/injuries", methods=["POST"])
 def info():
@@ -33,18 +34,15 @@ def info():
     prospect_json = ffs.get_injured_players_in_prospects(sls)
 
     return render_template("injuries.html", 
+                           utc_dt=datetime.datetime.now(),
                            injuries_squad=squad_json,
                            injuries_prospects=prospect_json,
-                           utc_dt=datetime.datetime.utcnow(),
                            league=league)
 
 @app.route("/stats", methods=["POST"])
 def stats():
     sls = request.form.get("sls")
-    print(sls)
-    print(sources)
     league = sls.split("-")[0]
-    source = sls.split("-")[1]
     ffs = FantasyFootballScraper(sls)
 
     data = []
@@ -53,11 +51,38 @@ def stats():
         data.append(ffs.read_bundesliga_stats_as_json(url=sources[key], filename=key))
         captions.append(value)
 
-    return render_template("stats.html", 
+    return render_template("stats.html",
+                           utc_dt=datetime.datetime.now(),
                            stats=data,
-                           utc_dt=datetime.datetime.utcnow(),
                            league=league,
                            captions=captions)
+
+@app.route("/team", methods=["POST"])
+def team():
+    sls = request.form.get("sls")
+    league = sls.split("-")[0]
+    ffs = FantasyFootballScraper(sls)
+    players = ffs.get_team_players_as_json(league=league)
+    prospects = ffs.get_prospect_players_as_json(league=league)
+    return render_template("team.html",
+                           utc_dt=datetime.datetime.now(),
+                           league=league,
+                           team_players=players,
+                           prospect_players=prospects)
+
+@app.route("/saveteam", methods=["POST"])
+def saveteam():
+    data = request.get_json()
+    league = data.get('league')
+    player_type = data.get('type')
+    player_data = data.get('data')
+
+    ffs = FantasyFootballScraper("bundesliga-sportsgambler")
+    ffs.save_team_players_as_json(league=league, type=player_type, content=player_data)
+
+    return {
+        "outcome" : "success"
+    }
 
 if __name__ == "__main__":
     app.run(debug=True)
