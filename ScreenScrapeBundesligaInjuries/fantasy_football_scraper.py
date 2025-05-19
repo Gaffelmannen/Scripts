@@ -2,6 +2,9 @@ import os
 import io
 import json
 import time
+import datetime
+
+from itertools import zip_longest
 
 from colorama import Fore, Back, Style
 
@@ -479,7 +482,87 @@ class FantasyFootballScraper:
             pass
 
         return success
+    
+    def get_age_of_source_files_as_json(self, league, source, stats):
+        json = ""
+        filename = ""
+        #stats_data = ""
 
+        available_sources = []
+        available_leagues = []
+        #available_stats = []
+        
+        for value in leagues_and_sources_map.values():
+            parts = value.split("-")
+            available_leagues.append(parts[0])
+            available_sources.append(parts[1])
+            #if len(parts) == 3:
+            #    for key in bundesliga_stat_headers.keys():
+            #        print(key)
+            #        available_stats.append(key)
+            
+        if league not in available_leagues:
+            return False, {
+                "input" : league,
+                "message" : "Not a valid league"
+            }
+        
+        if source not in available_sources:
+            return False, {
+                "input" : source,
+                "message" : "Not a valid source"
+            }
+
+        if stats != None:
+            filename = f"temp/temp-{league}-{source}-{stats}.txt"
+        else:
+            filename = f"temp/temp-{league}-{source}.txt"
+        st=os.stat(filename)    
+        mtime=st.st_mtime
+        age = f"{datetime.datetime.fromtimestamp(mtime)}"
+    
+        json = {
+            "file" : filename,
+            "fileage": f"{age}"
+        }
+
+        return json
+
+    def get_age_of_all_source_files(self):
+        json = {}
+
+        available_leagues = []
+        available_sources = []
+        stat_headers = []
+
+        for bsh in bundesliga_stat_headers.keys():
+            stat_headers.append(bsh.split("-")[2])
+
+        for value in leagues_and_sources_map.values():
+            parts = value.split("-")
+            available_leagues.append(parts[0])
+            available_sources.append(parts[1])
+
+        for league, source in zip_longest(
+            available_leagues, 
+            available_sources,
+            fillvalue=None
+        ):
+            if league != None and source != None:
+                if not "stats" in source:
+                    json[f"{league}-{source}"] = self.get_age_of_source_files_as_json(
+                        league=league,
+                        source=source,
+                        stats=None
+                    )
+                else:
+                    for stat_type in stat_headers:
+                        json[f"{league}-{source}-{stat_type}"] = self.get_age_of_source_files_as_json(
+                        league=league,
+                        source=source,
+                        stats=stat_type
+                    )
+        return json                    
 
 
 

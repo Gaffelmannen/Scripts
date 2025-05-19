@@ -18,10 +18,15 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def home():
+    ffs = FantasyFootballScraper("test-testsson")
+    fileages = ffs.get_age_of_all_source_files()
+
     return render_template("index.html",
                            utc_dt=datetime.datetime.now(),
                            rows=leagues_and_sources_map,
                            target="stats",
+                           fileages=fileages,
+                           bsh=bundesliga_stat_headers,
                            sls=["bundesliga-players", "premierleague-players"])
 
 @app.route("/injuries", methods=["POST"])

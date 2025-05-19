@@ -11,15 +11,19 @@
         <h1>Fantasy Football Screenscraper</h1>
 
         {% for key, value in rows.items() %}
+        
         <div class="injury_scraper">
-            <h2>{{key}}</h2>
+            <h2>{{key.split('-')[1]}}</h2>
+            <h4>Source: {{value.split('-')[1]}}</h4>
             <form name="scrape_bundesliga_form" method="POST" action="/{{key.split('-')[0].lower()}}">
-                {% if key in sources: %}
-                <p>{{key}}</p>
-                {% endif %}
                 <input type="hidden" name="sls" value="{{value}}">
                 <button onclick="javascript: document.getElementById('scrape_bundesliga_form').submit();">Scrape</button>
+                {% if not "stats" in value: %}
+                    {% set age = fileages[value]["fileage"] %}
+                    &nbsp;<span class="age-info{{ age_class }}">Last update: {{ age }} min</span>
+                {% endif %}
             </form>
+            
         </div>
         <div>
             &nbsp;

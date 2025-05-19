@@ -111,6 +111,16 @@ textarea.edit-team {
     border-bottom: none;
 }
 
+.age-info {
+    display: inline-block;
+    background-color: #e7f3fe;
+    color: #0366d6;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
 button {
     padding: 8px 16px;
     border-radius: 4px;
