@@ -29,24 +29,37 @@ def home():
                            bsh=bundesliga_stat_headers,
                            sls=["bundesliga-players", "premierleague-players"])
 
-@app.route("/injuries", methods=["POST"])
-def info():
-    sls = request.form.get("sls")
-    league = sls.split("-")[0]
-    
+@app.route("/injuries", methods=["GET", "POST"])
+def injuries():
+    sls = None
+
+    if request.method == "POST":
+        sls = request.form.get("sls")
+    elif request.method == "GET":
+        sls = request.args.get("sls")
+
     ffs = FantasyFootballScraper(sls)
     squad_json = ffs.get_injured_players_in_squad(sls)
     prospect_json = ffs.get_injured_players_in_prospects(sls)
 
-    return render_template("injuries.html", 
-                           utc_dt=datetime.datetime.now(),
-                           injuries_squad=squad_json,
-                           injuries_prospects=prospect_json,
-                           league=league)
+    league = sls.split("-")[0]
 
-@app.route("/stats", methods=["POST"])
+    return render_template("injuries.html", 
+                        utc_dt=datetime.datetime.now(),
+                        injuries_squad=squad_json,
+                        injuries_prospects=prospect_json,
+                        league=league)
+    
+
+@app.route("/stats", methods=["GET", "POST"])
 def stats():
-    sls = request.form.get("sls")
+    sls = None
+
+    if request.method == "POST":
+        sls = request.form.get("sls")
+    elif request.method == "GET":
+        sls = request.args.get("sls")
+    
     league = sls.split("-")[0]
     ffs = FantasyFootballScraper(sls)
 

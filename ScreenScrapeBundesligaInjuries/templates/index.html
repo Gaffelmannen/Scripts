@@ -5,25 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fantasy Football Scraper</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <script>
+
+        function handleScrape(url, sls) {
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('sls', sls);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(data => {
+                loadingIndicator.style.display = 'none';
+                const redirectUrl = url;
+                const params = new URLSearchParams({
+                    sls: sls,
+                });
+                const fullUrl = `${redirectUrl}?${params.toString()}`;
+                window.location.href = fullUrl;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingIndicator.style.display = 'none';
+                alert('An error occurred during scraping.');
+            });
+        }
+    </script>
+
 </head>
 <body>
     <div class="container">
-        <h1>Fantasy Football Screenscraper</h1>
+        <h1 class="main-heading">Fantasy Football Scraper</h1>
 
         {% for key, value in rows.items() %}
         
         <div class="injury_scraper">
             <h2>{{key.split('-')[1]}}</h2>
             <h4>Source: {{value.split('-')[1]}}</h4>
-            <form name="scrape_bundesliga_form" method="POST" action="/{{key.split('-')[0].lower()}}">
-                <input type="hidden" name="sls" value="{{value}}">
-                <button onclick="javascript: document.getElementById('scrape_bundesliga_form').submit();">Scrape</button>
-                {% if not "stats" in value: %}
-                    {% set age = fileages[value]["fileage"] %}
-                    &nbsp;<span class="age-info{{ age_class }}">Last update: {{ age }} min</span>
-                {% endif %}
-            </form>
             
+            <button name="das" onclick="javascript: handleScrape('/{{ key.split('-')[0].lower().strip() }}', '{{value}}');">Scrape</button>
+            {% if not "stats" in value: %}
+                {% set age = fileages[value]["fileage"] %}
+                &nbsp;<span class="age-info{{ age_class }}">Last update: {{ age }} min</span>
+            {% endif %}
         </div>
         <div>
             &nbsp;
@@ -55,7 +84,12 @@
             &nbsp;
         </div>
 
-        <p>Updated: {{ utc_dt }}</p>
+        <p class="updated-text">Updated: {{ utc_dt }}</p>
+
+        <div id="loadingIndicator">
+            <span class="spinner"></span>
+            Loading...
+        </div>
 
     </div>
 </body>
