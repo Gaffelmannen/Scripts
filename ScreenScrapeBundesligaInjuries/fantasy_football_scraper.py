@@ -19,7 +19,7 @@ from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 from fake_useragent import UserAgent
 
-debug = False
+debug = True
 
 separator = "<>"
 
@@ -91,7 +91,7 @@ leagues_and_sources_map = {
 
 class FantasyFootballScraper:
 
-    CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 60
+    CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 1
     
     def __init__(self, sls, url=None, filename=None):
         self.source = sls.split("-")[1]
@@ -139,6 +139,11 @@ class FantasyFootballScraper:
         stats = []
         read_from_remote = True
 
+        first_name = None
+        last_name = None
+        number = None
+        metric = None
+
         self.pageurl = url
         self.tempfilename = "temp/temp-{}.txt".format(filename)
 
@@ -166,28 +171,29 @@ class FantasyFootballScraper:
         )
         driver.get(self.pageurl)
 
-        rows = driver.find_elements(By.XPATH, "//div[@class='footer']")
+        rows = driver.find_elements(By.XPATH, "//div[@class='card-stats__footer']")
+        
         for p in rows:
 
             tags = p.get_attribute("innerHTML")
             soup = BeautifulSoup(tags, 'html.parser')
             
-            first_name = soup.find("span", {"class": "first"})
+            first_name = soup.find("span", {"class": "card-stats__name"})
             if first_name != None:
                 first_name = first_name.get_text().strip()
 
-            last_name = soup.find("span", {"class": "last"})
-            if last_name != None:
-                last_name = last_name.get_text().strip()
+            #last_name = soup.find("span", {"class": "last"})
+            #if last_name != None:
+            #    last_name = last_name.get_text().strip()
 
-            number = soup.find("span", {"class" : "value"})
+            number = soup.find("div", {"class" : "card-stats__value"})
             if number != None:
                 number = number.get_text().strip()
             
             stats.append(
-                "{} {} {} {}".format(
+                "{} {} {}".format(
                 first_name,
-                last_name,
+                #last_name,
                 separator,
                 number
             ))
@@ -201,7 +207,7 @@ class FantasyFootballScraper:
             tags = p.get_attribute("innerHTML")
             soup = BeautifulSoup(tags, 'html.parser')
 
-            footer = soup.find("div", {"class": "footer"})
+            footer = soup.find("div", {"class": "card-stats__footer"})
             if footer != None:
                 footer = footer.get_text().strip()
             
@@ -213,9 +219,14 @@ class FantasyFootballScraper:
             if last_name != None:
                 last_name = last_name.get_text().strip()
 
-            number = soup.find("span", {"class" : "value fixed fixed-large"})
+            number = soup.find("span", {"class" : "value shortText"})
             if number != None:
                 number = number.get_text().strip()
+            
+            #if number == None:
+            #    number = soup.find("span", {"class" : "value fixed mediumText"})
+            #    if number != None:
+            #        number = number.get_text().strip()
             
             metric = soup.find("span", {"class" : "metric"})
             if metric != None:
