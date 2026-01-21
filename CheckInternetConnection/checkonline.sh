@@ -29,6 +29,9 @@ esac
 # Get local IP
 if [ $machine == "Mac" ]; then
     local_ip=$(ipconfig getifaddr en0)
+    if [ "$local_ip" = "" ]; then
+    	local_ip=$(ipconfig getifaddr en1)
+    fi
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     local_ip=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
 fi
