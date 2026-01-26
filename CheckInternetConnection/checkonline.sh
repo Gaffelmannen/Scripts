@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set +e
+echo "Hello"
 
 # Fundamenta
 hostname=www.sunet.se
@@ -36,6 +37,13 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     local_ip=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
 fi
 
+# Get SSID
+if [ $machine == "Mac" ]; then
+    ssid=$(networksetup -getairportnetwork en1 | cut -c 24-)
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    ssid=$(iwgetid -r)
+fi
+
 # Try to check speed
 if [ "$(curl -sL -w '%{http_code}' ${speed_check_url} -o /dev/null)" = "200" ]; then
 	avg_speed=$(curl -qfsS -w '%{speed_download}' -o /dev/null --url "${speed_check_url}l")
@@ -54,4 +62,5 @@ echo "Country:             `echo $data | jq -r '.country'`";
 echo "Timezone:            `echo $data | jq -r '.timezone'`";
 echo "Organization:        `echo $data | jq -r '.org'`";
 echo "Location:            `echo $data | jq -r '.loc'`";
+echo "SSID:                `echo $ssid`";
 echo "Speed:               `echo `$avg_speed_output` echo Mbps`";
