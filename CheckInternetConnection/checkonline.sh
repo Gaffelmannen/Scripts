@@ -1,11 +1,13 @@
 #!/bin/bash
 
 set +e
-echo "Hello"
 
 # Fundamenta
 hostname=www.sunet.se
 speed_check_url='https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_1920_18MG.mp4'
+
+# Interface
+used_interface=""
 
 # Check connection
 while ! ping -c1 $hostname &>/dev/null
@@ -27,19 +29,38 @@ case "${unameOut}" in
     *)          machine="UNKNOWN:${unameOut}"
 esac
 
+# Get interface used for internet connection
+if [ $machine == "Mac" ]; then
+    for interface in $(networksetup -listallhardwareports | awk '/^Device:/ {print $2}'); do
+        ip=$(ipconfig getifaddr $interface)
+        if [ -n "$ip" ]; then
+            used_interface=$interface
+            break
+        fi
+    done
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    $used_interface=$(ip -o link show | sed -rn '/^[0-9]+: en/{s/.: ([^:]*):.*/\1/p}')
+fi
+
+# Check if we found an interface, if not - exit
+if [ "$used_interface" == "" ]; then
+    echo "Could not determine network interface used for internet connection."
+    exit 1
+fi
+
+# Get MAC address
+macaddress=$(ifconfig $used_interface | awk '/ether/ {print $2}')
+
 # Get local IP
 if [ $machine == "Mac" ]; then
-    local_ip=$(ipconfig getifaddr en0)
-    if [ "$local_ip" = "" ]; then
-    	local_ip=$(ipconfig getifaddr en1)
-    fi
+    local_ip=$(ipconfig getifaddr $interface)
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    local_ip=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+    local_ip=$(/sbin/ip -o -4 addr list $interface | awk '{print $4}' | cut -d/ -f1)
 fi
 
 # Get SSID
 if [ $machine == "Mac" ]; then
-    ssid=$(networksetup -getairportnetwork en1 | cut -c 24-)
+    ssid=$(networksetup -getairportnetwork $interface | cut -c 24-)
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     ssid=$(iwgetid -r)
 fi
@@ -55,6 +76,7 @@ fi
 # Present it
 echo "Internet connection okay! - `date`";
 echo ""
+echo "Mac Address:         `echo $macaddress`";
 echo "Internal IP:         `echo $local_ip`";
 echo "External IP:         `dig @resolver4.opendns.com myip.opendns.com +short -4`";
 echo "City:                `echo $data | jq -r '.city'`";
