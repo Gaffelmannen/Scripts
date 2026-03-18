@@ -21,10 +21,11 @@ p {
 }
 
 table.stats-table {
-    width: 100%; 
-    max-width: 600px;
+    min-width: 800px;
+    max-width: 800px;
     border-collapse: collapse;
     margin-bottom: 20px;
+    font-size: smaller;
 }
 
 table.stats-table th, table.stats-table td {
@@ -35,18 +36,10 @@ table.stats-table th, table.stats-table td {
 
 table.stats-table th {
     background-color: #f2f2f2;
+    width: 20%;
 }
 
-table.stats-table td:first-child,
-table.stats-table th:first-child {
-    width: 70%;
-}
 
-table.stats-table td:last-child,
-table.stats-table th:last-child {
-    width: 30%;
-    text-align: center;
-}
 
 textarea.edit-team {
     width: 100%;

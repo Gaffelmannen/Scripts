@@ -14,8 +14,8 @@
             {% if injuries_squad %}
             <table class="stats-table">
                 <tr>
-                    <th>Team</th>
                     <th>Name</th>
+                    <th>Team</th>
                     <th>Return date</th>
                     <th>Type</th>
                     <th>Note</th>
@@ -23,8 +23,8 @@
                 
                 {% for injury in injuries_squad %}
                 <tr>
-                    <td>{{ injury["team"] }}</td>
                     <td>{{ injury["name"] }}</td>
+                    <td>{{ injury["team"] }}</td>
                     <td>{{ injury["return_date"] }}</td>
                     <td>{{ injury["type"] }}</td>
                     <td>{{ injury["note"] }}</td>
@@ -39,16 +39,16 @@
             {% if injuries_prospects %}
             <table class="stats-table">
                 <tr>
-                    <th>Team</th>
                     <th>Name</th>
+                    <th>Team</th>
                     <th>Return date</th>
                     <th>Type</th>
                     <th>Note</th>
                 </tr>
                 {% for injury in injuries_prospects %}
                 <tr>
-                    <td>{{ injury["team"] }}</td>
                     <td>{{ injury["name"] }}</td>
+                    <td>{{ injury["team"] }}</td>
                     <td>{{ injury["return_date"] }}</td>
                     <td>{{ injury["type"] }}</td>
                     <td>{{ injury["note"] }}</td>
