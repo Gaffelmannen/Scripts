@@ -60,7 +60,7 @@ fi
 
 # Get SSID
 if [ $machine == "Mac" ]; then
-    ssid=$(networksetup -getairportnetwork $interface | cut -c 24-)
+    ssid=$(ipconfig getsummary $interface | awk -F ' SSID : ' '/ SSID : / {print $2}' | xargs)
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     ssid=$(iwgetid -r)
 fi
