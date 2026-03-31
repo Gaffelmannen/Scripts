@@ -91,7 +91,7 @@ leagues_and_sources_map = {
 
 class FantasyFootballScraper:
 
-    CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 1
+    CONST_MAX_AGE_OF_DATA_FILE_IN_MINUTES = 60
     
     def __init__(self, sls, url=None, filename=None):
         self.source = sls.split("-")[1]
@@ -223,11 +223,12 @@ class FantasyFootballScraper:
             if number != None:
                 number = number.get_text().strip()
             
-            #if number == None:
+            #print("filename={}".format(filename))
+            #if filename=="bundesliga-stats-passes" or filename == "bundesliga-stats-intensiveruns":
             #    number = soup.find("span", {"class" : "value fixed mediumText"})
             #    if number != None:
             #        number = number.get_text().strip()
-            
+
             metric = soup.find("span", {"class" : "metric"})
             if metric != None:
                 metric = metric.get_text().strip()
@@ -482,7 +483,7 @@ class FantasyFootballScraper:
     
     def save_team_players_as_json(self, type, league, content):
         success = False
-
+        
         try:
             filename = f"data/{league}-{type}.txt"
             f = open(filename, "w", encoding="utf-8")

@@ -91,9 +91,9 @@ def team():
 @app.route("/saveteam", methods=["POST"])
 def saveteam():
     data = request.get_json()
-    league = data.get('league')
-    player_type = data.get('type')
-    player_data = data.get('data')
+    league = data.get("league")
+    player_type = data.get("type")
+    player_data = data.get("data")
 
     ffs = FantasyFootballScraper("bundesliga-sportsgambler")
     ffs.save_team_players_as_json(league=league, type=player_type, content=player_data)
