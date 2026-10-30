@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Fantasy Football Scraper</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b8cff"/>
+      <stop offset="1" stop-color="#0056b3"/>
+    </linearGradient>
+    <clipPath id="ball"><circle cx="29" cy="29" r="21"/></clipPath>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <circle cx="29" cy="29" r="21" fill="#fff"/>
+  <g clip-path="url(#ball)" fill="#1d2b3a" stroke="#1d2b3a" stroke-width="1.6" stroke-linejoin="round">
+    <polygon points="29.00,21.50 36.13,26.68 33.41,35.07 24.59,35.07 21.87,26.68"/>
+    <polygon points="46.05,5.54 48.59,13.36 41.93,18.20 35.27,13.36 37.82,5.54"/><polygon points="56.58,37.96 49.92,42.80 43.27,37.96 45.81,30.14 54.04,30.14"/><polygon points="29.00,58.00 22.34,53.16 24.89,45.34 33.11,45.34 35.66,53.16"/><polygon points="1.42,37.96 3.96,30.14 12.19,30.14 14.73,37.96 8.08,42.80"/><polygon points="11.95,5.54 20.18,5.54 22.73,13.36 16.07,18.20 9.41,13.36"/>
+    <line x1="29.00" y1="21.50" x2="29.00" y2="14.00"/><line x1="36.13" y1="26.68" x2="43.27" y2="24.36"/><line x1="33.41" y1="35.07" x2="37.82" y2="41.14"/><line x1="24.59" y1="35.07" x2="20.18" y2="41.14"/><line x1="21.87" y1="26.68" x2="14.73" y2="24.36"/>
+  </g>
+  <circle cx="29" cy="29" r="21" fill="none" stroke="#1d2b3a" stroke-width="2"/>
+  <circle cx="48" cy="48" r="12" fill="#e53935" stroke="#fff" stroke-width="3"/>
+  <path d="M45.5 41.5h5v4h4v5h-4v4h-5v-4h-4v-5h4z" fill="#fff"/>
+</svg>
